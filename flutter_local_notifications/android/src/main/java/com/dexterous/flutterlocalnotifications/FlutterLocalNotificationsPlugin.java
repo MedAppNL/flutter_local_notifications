@@ -451,10 +451,7 @@ public class FlutterLocalNotificationsPlugin
     AlarmManager alarmManager = getAlarmManager(context);
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
       AlarmManagerCompat.setAlarmClock(
-          alarmManager,
-          notificationDetails.millisecondsSinceEpoch,
-          pendingIntent,
-          pendingIntent);
+          alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
     } else {
       AlarmManagerCompat.setExact(
           alarmManager,
@@ -492,8 +489,7 @@ public class FlutterLocalNotificationsPlugin
                 .toInstant()
                 .toEpochMilli();
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setAlarmClock(
-          alarmManager, epochMilli, pendingIntent, pendingIntent);
+      AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
     } else {
       AlarmManagerCompat.setExact(alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
     }
