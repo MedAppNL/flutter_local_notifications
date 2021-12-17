@@ -460,10 +460,10 @@ public class FlutterLocalNotificationsPlugin
 
     AlarmManager alarmManager = getAlarmManager(context);
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setExactAndAllowWhileIdle(
+      AlarmManagerCompat.setAlarmClock(
           alarmManager,
-          AlarmManager.RTC_WAKEUP,
           notificationDetails.millisecondsSinceEpoch,
+          pendingIntent,
           pendingIntent);
     } else {
       AlarmManagerCompat.setExact(
@@ -502,8 +502,8 @@ public class FlutterLocalNotificationsPlugin
                 .toInstant()
                 .toEpochMilli();
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setExactAndAllowWhileIdle(
-          alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
+      AlarmManagerCompat.setAlarmClock(
+          alarmManager, epochMilli, pendingIntent, pendingIntent);
     } else {
       AlarmManagerCompat.setExact(alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
     }
@@ -525,8 +525,8 @@ public class FlutterLocalNotificationsPlugin
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
     AlarmManager alarmManager = getAlarmManager(context);
-    AlarmManagerCompat.setExactAndAllowWhileIdle(
-        alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
+    AlarmManagerCompat.setAlarmClock(
+        alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
     saveScheduledNotification(context, notificationDetails);
   }
 
@@ -578,8 +578,8 @@ public class FlutterLocalNotificationsPlugin
     AlarmManager alarmManager = getAlarmManager(context);
 
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setExactAndAllowWhileIdle(
-          alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
+      AlarmManagerCompat.setAlarmClock(
+          alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
     } else {
       alarmManager.setInexactRepeating(
           AlarmManager.RTC_WAKEUP, notificationTriggerTime, repeatInterval, pendingIntent);
