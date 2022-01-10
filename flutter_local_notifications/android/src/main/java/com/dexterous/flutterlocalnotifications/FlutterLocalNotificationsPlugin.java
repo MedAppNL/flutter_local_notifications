@@ -87,6 +87,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** FlutterLocalNotificationsPlugin */
 @Keep
@@ -100,6 +101,8 @@ public class FlutterLocalNotificationsPlugin
   private static final String DEFAULT_ICON = "defaultIcon";
   private static final String SELECT_NOTIFICATION = "SELECT_NOTIFICATION";
   private static final String SCHEDULED_NOTIFICATIONS = "scheduled_notifications";
+  // NOTE: We don't convert on update, so we can never release this until we do
+  private static final String SCHEDULED_NOTIFICATIONS_SET = "scheduled_notifications_set";
   private static final String INITIALIZE_METHOD = "initialize";
   private static final String GET_CALLBACK_HANDLE_METHOD = "getCallbackHandle";
   private static final String ARE_NOTIFICATIONS_ENABLED_METHOD = "areNotificationsEnabled";
@@ -392,12 +395,14 @@ public class FlutterLocalNotificationsPlugin
   private static ArrayList<NotificationDetails> loadScheduledNotifications(Context context) {
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
-        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS, Context.MODE_PRIVATE);
-    String json = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS, null);
-    if (json != null) {
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_SET, Context.MODE_PRIVATE);
+    Set<String> jsons = sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
+    if (jsons != null) {
       Gson gson = buildGson();
-      Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
-      scheduledNotifications = gson.fromJson(json, type);
+      Type type = new TypeToken<NotificationDetails>() {}.getType();
+      for (String json : jsons) {
+        scheduledNotifications.add(gson.fromJson(json, type));
+      }
     }
     return scheduledNotifications;
   }
@@ -405,11 +410,15 @@ public class FlutterLocalNotificationsPlugin
   private static void saveScheduledNotifications(
       Context context, ArrayList<NotificationDetails> scheduledNotifications) {
     Gson gson = buildGson();
-    String json = gson.toJson(scheduledNotifications);
+    int amount = scheduledNotifications.size();
+    String[] jsons = new String[amount];
+    for (int i = 0; i < amount; i++) {
+      jsons[i] = gson.toJson(scheduledNotifications.get(i));
+    }
     SharedPreferences sharedPreferences =
-        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS, Context.MODE_PRIVATE);
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_SET, Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putString(SCHEDULED_NOTIFICATIONS, json);
+    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, Set.of(jsons));
     editor.apply();
   }
 
@@ -606,6 +615,7 @@ public class FlutterLocalNotificationsPlugin
     return repeatInterval;
   }
 
+  // TODO don't json parse the whole list, but this will allow duplicate notifications with the same id
   private static void saveScheduledNotification(
       Context context, NotificationDetails notificationDetails) {
     ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
@@ -1615,7 +1625,11 @@ public class FlutterLocalNotificationsPlugin
       alarmManager.cancel(pendingIntent);
     }
 
-    saveScheduledNotifications(applicationContext, new ArrayList<>());
+    SharedPreferences sharedPreferences =
+            applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_SET, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.remove(SCHEDULED_NOTIFICATIONS_SET);
+    editor.apply();
     result.success(null);
   }
 
