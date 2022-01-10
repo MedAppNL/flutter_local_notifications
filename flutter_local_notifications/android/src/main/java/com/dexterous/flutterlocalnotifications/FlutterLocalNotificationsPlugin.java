@@ -84,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -615,19 +616,18 @@ public class FlutterLocalNotificationsPlugin
     return repeatInterval;
   }
 
-  // TODO don't json parse the whole list, but this will allow duplicate notifications with the same id
+  // Don't json parse the whole list, but this will allow duplicate notifications with the same id
   private static void saveScheduledNotification(
       Context context, NotificationDetails notificationDetails) {
-    ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
-    ArrayList<NotificationDetails> scheduledNotificationsToSave = new ArrayList<>();
-    for (NotificationDetails scheduledNotification : scheduledNotifications) {
-      if (scheduledNotification.id.equals(notificationDetails.id)) {
-        continue;
-      }
-      scheduledNotificationsToSave.add(scheduledNotification);
-    }
-    scheduledNotificationsToSave.add(notificationDetails);
-    saveScheduledNotifications(context, scheduledNotificationsToSave);
+    SharedPreferences sharedPreferences =
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_SET, Context.MODE_PRIVATE);
+    Set<String> jsons = sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, new HashSet<String>());
+    Set<String> newSet = new HashSet<String>(jsons);
+    Gson gson = buildGson();
+    newSet.add(gson.toJson(notificationDetails));
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, newSet);
+    editor.apply();
   }
 
   private static int getDrawableResourceId(Context context, String name) {
