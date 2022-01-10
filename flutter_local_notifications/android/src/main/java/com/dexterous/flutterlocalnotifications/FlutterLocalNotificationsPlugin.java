@@ -38,6 +38,7 @@ import androidx.core.app.Person;
 import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.IconCompat;
+
 import com.dexterous.flutterlocalnotifications.isolate.IsolatePreferences;
 import com.dexterous.flutterlocalnotifications.models.BitmapSource;
 import com.dexterous.flutterlocalnotifications.models.DateTimeComponents;
@@ -64,17 +65,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jakewharton.threetenabp.AndroidThreeTen;
-import io.flutter.FlutterInjector;
-import io.flutter.embedding.engine.loader.FlutterLoader;
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.embedding.engine.plugins.activity.ActivityAware;
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -86,9 +77,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import io.flutter.FlutterInjector;
+import io.flutter.embedding.engine.loader.FlutterLoader;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.BinaryMessenger;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 
 /** FlutterLocalNotificationsPlugin */
 @Keep
@@ -101,7 +103,9 @@ public class FlutterLocalNotificationsPlugin
   private static final String DRAWABLE = "drawable";
   private static final String DEFAULT_ICON = "defaultIcon";
   private static final String SELECT_NOTIFICATION = "SELECT_NOTIFICATION";
-  private static final String SCHEDULED_NOTIFICATIONS = "scheduled_notifications";
+  private static final String SCHEDULED_NOTIFICATIONS_FILE = "scheduled_notifications";
+  private static final String SCHEDULED_NOTIFICATIONS_STRING = "scheduled_notifications";
+  private static final String SCHEDULED_NOTIFICATIONS_ID = "snid";
   private static final String INITIALIZE_METHOD = "initialize";
   private static final String GET_CALLBACK_HANDLE_METHOD = "getCallbackHandle";
   private static final String ARE_NOTIFICATIONS_ENABLED_METHOD = "areNotificationsEnabled";
@@ -119,6 +123,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String SHOW_METHOD = "show";
   private static final String CANCEL_METHOD = "cancel";
   private static final String CANCEL_ALL_METHOD = "cancelAll";
+  private static final String CANCEL_ALL_PENDING_METHOD = "cancelAllPending";
   private static final String SCHEDULE_METHOD = "schedule";
   private static final String ZONED_SCHEDULE_METHOD = "zonedSchedule";
   private static final String PERIODICALLY_SHOW_METHOD = "periodicallyShow";
@@ -151,6 +156,7 @@ public class FlutterLocalNotificationsPlugin
           + " your Android head project.";
   private static final String CANCEL_ID = "id";
   private static final String CANCEL_TAG = "tag";
+  private static final String REPLACE = "replace";
   static String NOTIFICATION_DETAILS = "notificationDetails";
   static Gson gson;
   private MethodChannel channel;
@@ -409,36 +415,64 @@ public class FlutterLocalNotificationsPlugin
   private static ArrayList<NotificationDetails> loadScheduledNotifications(Context context) {
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
-        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS, Context.MODE_PRIVATE);
-    String json = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS, null);
-    if (json != null) {
-      Gson gson = buildGson();
-      Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
-      scheduledNotifications = gson.fromJson(json, type);
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    Map<String, ?> jsonNotifications = sharedPreferences.getAll();
+    Log.v("FLN", "Got all " + jsonNotifications.size() + " notification JSONs");
+    Gson gson = buildGson();
+    Type type = new TypeToken<NotificationDetails>() {}.getType();
+    for (Object value : jsonNotifications.values()) {
+      if (value instanceof String) {
+        String json = (String) value;
+        scheduledNotifications.add(gson.fromJson(json, type));
+      } else {
+        Log.v("FLN", "Found non-string value: " + value);
+      }
     }
     return scheduledNotifications;
   }
 
-  private static void saveScheduledNotifications(
-      Context context, ArrayList<NotificationDetails> scheduledNotifications) {
-    Gson gson = buildGson();
-    String json = gson.toJson(scheduledNotifications);
-    SharedPreferences sharedPreferences =
-        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putString(SCHEDULED_NOTIFICATIONS, json).apply();
-  }
+  // TODO rewrite migration code
 
+  /**
+   * Get scheduled notifications from shared preferences, converting from old format if present.
+   *
+   * <p>Returns null if neither are present The returned Set may not be mutated!
+   */
+  //  private static Set<String> getScheduledNotificationsJsonSet(SharedPreferences
+  // sharedPreferences) {
+  //    Set<String> jsonNotifications =
+  //        sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
+  //    if (jsonNotifications != null) {
+  //      return jsonNotifications;
+  //    }
+  //    String notificationsJson = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS_STRING,
+  // null);
+  //    if (notificationsJson == null) {
+  //      return null;
+  //    }
+  //
+  //    // Convert (once) from the old format to the new format and delete the old
+  //    Gson gson = buildGson();
+  //    Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
+  //    ArrayList<NotificationDetails> notificationsList = gson.fromJson(notificationsJson, type);
+  //    int amount = notificationsList.size();
+  //    String[] jsonNotificationsToSave = new String[amount];
+  //    for (int i = 0; i < amount; i++) {
+  //      jsonNotificationsToSave[i] = gson.toJson(notificationsList.get(i));
+  //    }
+  //    Set<String> scheduledNotifications = Set.of(jsonNotificationsToSave);
+  //    SharedPreferences.Editor editor = sharedPreferences.edit();
+  //    editor.remove(SCHEDULED_NOTIFICATIONS_STRING);
+  //    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, scheduledNotifications);
+  //    editor.apply();
+  //    return scheduledNotifications;
+  //  }
   static void removeNotificationFromCache(Context context, Integer notificationId) {
-    ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
-    for (Iterator<NotificationDetails> it = scheduledNotifications.iterator(); it.hasNext(); ) {
-      NotificationDetails notificationDetails = it.next();
-      if (notificationDetails.id.equals(notificationId)) {
-        it.remove();
-        break;
-      }
-    }
-    saveScheduledNotifications(context, scheduledNotifications);
+    SharedPreferences sharedPreferences =
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.remove(SCHEDULED_NOTIFICATIONS_ID + notificationId);
+    editor.apply();
   }
 
   @SuppressWarnings("deprecation")
@@ -457,51 +491,17 @@ public class FlutterLocalNotificationsPlugin
       Context context,
       final NotificationDetails notificationDetails,
       Boolean updateScheduledNotificationsCache) {
-    Gson gson = buildGson();
-    String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
-    notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
-    PendingIntent pendingIntent =
-        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
-
-    AlarmManager alarmManager = getAlarmManager(context);
-    if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
-      //   are not cancelled by AlarmManager.
-      if (VERSION.SDK_INT >= VERSION_CODES.S) {
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
-            alarmManager,
-            AlarmManager.RTC_WAKEUP,
-            notificationDetails.millisecondsSinceEpoch,
-            pendingIntent);
-      } else {
-        AlarmManagerCompat.setAlarmClock(
-            alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
-      }
-    } else {
-      AlarmManagerCompat.setExact(
-          alarmManager,
-          AlarmManager.RTC_WAKEUP,
-          notificationDetails.millisecondsSinceEpoch,
-          pendingIntent);
-    }
-
-    if (updateScheduledNotificationsCache) {
-      saveScheduledNotification(context, notificationDetails);
-    }
+    scheduleNotificationAtTime(
+        context,
+        notificationDetails,
+        notificationDetails.millisecondsSinceEpoch,
+        updateScheduledNotificationsCache);
   }
 
   private static void zonedScheduleNotification(
       Context context,
       final NotificationDetails notificationDetails,
       Boolean updateScheduledNotificationsCache) {
-    Gson gson = buildGson();
-    String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
-    notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
-    PendingIntent pendingIntent =
-        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
-    AlarmManager alarmManager = getAlarmManager(context);
     long epochMilli =
         VERSION.SDK_INT >= VERSION_CODES.O
             ? ZonedDateTime.of(
@@ -514,6 +514,23 @@ public class FlutterLocalNotificationsPlugin
                     org.threeten.bp.ZoneId.of(notificationDetails.timeZoneName))
                 .toInstant()
                 .toEpochMilli();
+    scheduleNotificationAtTime(
+        context, notificationDetails, epochMilli, updateScheduledNotificationsCache);
+  }
+
+  private static void scheduleNotificationAtTime(
+      Context context,
+      NotificationDetails notificationDetails,
+      long epochMilli,
+      Boolean updateScheduledNotificationsCache) {
+    Gson gson = buildGson();
+    String notificationDetailsJson = gson.toJson(notificationDetails);
+    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
+    notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
+    PendingIntent pendingIntent =
+        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
+
+    AlarmManager alarmManager = getAlarmManager(context);
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
       // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
       //   are not cancelled by AlarmManager.
@@ -648,16 +665,13 @@ public class FlutterLocalNotificationsPlugin
 
   private static void saveScheduledNotification(
       Context context, NotificationDetails notificationDetails) {
-    ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
-    ArrayList<NotificationDetails> scheduledNotificationsToSave = new ArrayList<>();
-    for (NotificationDetails scheduledNotification : scheduledNotifications) {
-      if (scheduledNotification.id.equals(notificationDetails.id)) {
-        continue;
-      }
-      scheduledNotificationsToSave.add(scheduledNotification);
-    }
-    scheduledNotificationsToSave.add(notificationDetails);
-    saveScheduledNotifications(context, scheduledNotificationsToSave);
+    SharedPreferences sharedPreferences =
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    Gson gson = buildGson();
+    String jsonNotificationToSave = gson.toJson(notificationDetails);
+    editor.putString(SCHEDULED_NOTIFICATIONS_ID + notificationDetails.id, jsonNotificationToSave);
+    editor.apply();
   }
 
   private static int getDrawableResourceId(Context context, String name) {
@@ -1355,6 +1369,9 @@ public class FlutterLocalNotificationsPlugin
       case CANCEL_ALL_METHOD:
         cancelAllNotifications(result);
         break;
+      case CANCEL_ALL_PENDING_METHOD:
+        cancelAllPending(result);
+        break;
       case PENDING_NOTIFICATION_REQUESTS_METHOD:
         pendingNotificationRequests(result);
         break;
@@ -1468,6 +1485,11 @@ public class FlutterLocalNotificationsPlugin
   private void zonedSchedule(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
     NotificationDetails notificationDetails = extractNotificationDetails(result, arguments);
+    zonedScheduleDetails(result, notificationDetails, applicationContext);
+  }
+
+  private static void zonedScheduleDetails(
+      Result result, NotificationDetails notificationDetails, Context applicationContext) {
     if (notificationDetails != null) {
       if (notificationDetails.matchDateTimeComponents != null) {
         notificationDetails.scheduledDateTime =
@@ -1477,6 +1499,21 @@ public class FlutterLocalNotificationsPlugin
       result.success(null);
     }
   }
+
+  //  private void zonedScheduleMultiple(MethodCall call, Result result) {
+  //    Map<String, Object> arguments = call.arguments();
+  //    boolean replace = arguments.get(REPLACE);
+  //    ArrayList<NotificationDetails> multiNotificationDetails =
+  //        extractMultipleNotificationDetails(result, arguments);
+  //
+  //    if (replace) {
+  //      cancelAllPendingNotifications();
+  //    }
+  //
+  //    for (NotificationDetails notificationDetails : multiNotificationDetails) {
+  //      zonedScheduleDetails(result, notificationDetails, applicationContext);
+  //    }
+  //  }
 
   private void show(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
@@ -1639,6 +1676,12 @@ public class FlutterLocalNotificationsPlugin
         && !isValidDrawableResource(applicationContext, icon, result, INVALID_ICON_ERROR_CODE);
   }
 
+  /**
+   * Cancels a single notification by ID
+   *
+   * @param id
+   * @param tag
+   */
   private void cancelNotification(Integer id, String tag) {
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
     PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, id, intent);
@@ -1653,26 +1696,42 @@ public class FlutterLocalNotificationsPlugin
     removeNotificationFromCache(applicationContext, id);
   }
 
-  private void cancelAllNotifications(Result result) {
-    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
-    notificationManager.cancelAll();
-    ArrayList<NotificationDetails> scheduledNotifications =
-        loadScheduledNotifications(applicationContext);
-    if (scheduledNotifications == null || scheduledNotifications.isEmpty()) {
-      result.success(null);
+  /** Cancels only all pending notifications, leaving active ones. */
+  private void cancelAllPending(Result result) {
+    cancelAllPendingNotifications();
+    result.success(null);
+  }
+
+  /** Cancels all pending notifications without parsing any JSON */
+  private void cancelAllPendingNotifications() {
+    SharedPreferences sharedPreferences =
+        applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    Map<String, String> jsonNotifications = (Map<String, String>) sharedPreferences.getAll();
+
+    if (jsonNotifications.isEmpty()) {
       return;
     }
 
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
-    for (NotificationDetails scheduledNotification : scheduledNotifications) {
-      PendingIntent pendingIntent =
-          getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
-      AlarmManager alarmManager = getAlarmManager(applicationContext);
+    AlarmManager alarmManager = getAlarmManager(applicationContext);
+    for (String id : jsonNotifications.keySet()) {
+      // TODO filter out non-matching IDs
+      int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length() - 1));
+      PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, intId, intent);
       alarmManager.cancel(pendingIntent);
     }
 
-    saveScheduledNotifications(applicationContext, new ArrayList<>());
-    result.success(null);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.clear();
+    editor.apply();
+  }
+
+  /** Cancels all notifications, both scheduled and active */
+  private void cancelAllNotifications(Result result) {
+    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
+    notificationManager.cancelAll();
+
+    cancelAllPending(result);
   }
 
   @Override
