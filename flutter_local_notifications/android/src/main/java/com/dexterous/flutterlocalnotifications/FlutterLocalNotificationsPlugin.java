@@ -84,8 +84,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -103,7 +101,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String SELECT_NOTIFICATION = "SELECT_NOTIFICATION";
   private static final String SCHEDULED_NOTIFICATIONS_FILE = "scheduled_notifications";
   private static final String SCHEDULED_NOTIFICATIONS_STRING = "scheduled_notifications";
-  private static final String SCHEDULED_NOTIFICATIONS_SET = "scheduled_notifications_set";
+  private static final String SCHEDULED_NOTIFICATIONS_ID = "snid";
   private static final String INITIALIZE_METHOD = "initialize";
   private static final String GET_CALLBACK_HANDLE_METHOD = "getCallbackHandle";
   private static final String ARE_NOTIFICATIONS_ENABLED_METHOD = "areNotificationsEnabled";
@@ -399,17 +397,19 @@ public class FlutterLocalNotificationsPlugin
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    Set<String> jsonNotifications = getScheduledNotificationsJsonSet(sharedPreferences);
+    Map<String, String> jsonNotifications =
+            (Map<String, String>) sharedPreferences.getAll();
     if (jsonNotifications != null) {
       Gson gson = buildGson();
       Type type = new TypeToken<NotificationDetails>() {}.getType();
-      for (String json : jsonNotifications) {
+      for (String json : jsonNotifications.values()) {
         scheduledNotifications.add(gson.fromJson(json, type));
       }
     }
     return scheduledNotifications;
   }
 
+  // TODO rewrite migration code
   /**
    * Get scheduled notifications from shared preferences, converting from old format if present.
    *
@@ -443,31 +443,12 @@ public class FlutterLocalNotificationsPlugin
     return scheduledNotifications;
   }
 
-  private static void saveScheduledNotifications(
-      Context context, ArrayList<NotificationDetails> scheduledNotifications) {
-    Gson gson = buildGson();
-    int amount = scheduledNotifications.size();
-    String[] jsonNotificationsToSave = new String[amount];
-    for (int i = 0; i < amount; i++) {
-      jsonNotificationsToSave[i] = gson.toJson(scheduledNotifications.get(i));
-    }
-    SharedPreferences sharedPreferences =
-        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, Set.of(jsonNotificationsToSave));
-    editor.apply();
-  }
-
   static void removeNotificationFromCache(Context context, Integer notificationId) {
-    ArrayList<NotificationDetails> scheduledNotifications = loadScheduledNotifications(context);
-    for (Iterator<NotificationDetails> it = scheduledNotifications.iterator(); it.hasNext(); ) {
-      NotificationDetails notificationDetails = it.next();
-      if (notificationDetails.id.equals(notificationId)) {
-        it.remove();
-        break;
-      }
-    }
-    saveScheduledNotifications(context, scheduledNotifications);
+    SharedPreferences sharedPreferences1 =
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences1.edit();
+    editor.remove(SCHEDULED_NOTIFICATIONS_ID + notificationId);
+    editor.apply();
   }
 
   @SuppressWarnings("deprecation")
@@ -644,18 +625,10 @@ public class FlutterLocalNotificationsPlugin
       Context context, NotificationDetails notificationDetails) {
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    Set<String> jsonNotifications = getScheduledNotificationsJsonSet(sharedPreferences);
-    if (jsonNotifications == null) {
-      jsonNotifications = new HashSet<String>();
-    }
-
-    // Mutations on the Set from getStringSet() are not allowed!
-    Set<String> jsonNotificationsToSave = new HashSet<String>(jsonNotifications);
-
-    Gson gson = buildGson();
-    jsonNotificationsToSave.add(gson.toJson(notificationDetails));
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, jsonNotificationsToSave);
+    Gson gson = buildGson();
+    String jsonNotificationToSave = gson.toJson(notificationDetails);
+    editor.putString(SCHEDULED_NOTIFICATIONS_ID + notificationDetails.id, jsonNotificationToSave);
     editor.apply();
   }
 
@@ -1669,25 +1642,31 @@ public class FlutterLocalNotificationsPlugin
     result.success(null);
   }
 
+  /**
+   * Cancels all pending notifications without parsing any JSON
+   */
   private void cancelAllPendingNotifications() {
-    ArrayList<NotificationDetails> scheduledNotifications =
-        loadScheduledNotifications(applicationContext);
-    if (scheduledNotifications.isEmpty()) {
+    SharedPreferences sharedPreferences =
+        applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+    Map<String, String> jsonNotifications =
+            (Map<String, String>) sharedPreferences.getAll();
+
+    if (jsonNotifications.isEmpty()) {
       return;
     }
 
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
     AlarmManager alarmManager = getAlarmManager(applicationContext);
-    for (NotificationDetails scheduledNotification : scheduledNotifications) {
+    for (String id : jsonNotifications.keySet()) {
+      // TODO filter out non-matching IDs
+      int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length() - 1));
       PendingIntent pendingIntent =
-          getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
+          getBroadcastPendingIntent(applicationContext, intId, intent);
       alarmManager.cancel(pendingIntent);
     }
 
-    SharedPreferences sharedPreferences =
-        applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.remove(SCHEDULED_NOTIFICATIONS_SET);
+    editor.clear();
     editor.apply();
   }
 
