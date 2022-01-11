@@ -397,8 +397,7 @@ public class FlutterLocalNotificationsPlugin
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    Map<String, String> jsonNotifications =
-            (Map<String, String>) sharedPreferences.getAll();
+    Map<String, String> jsonNotifications = (Map<String, String>) sharedPreferences.getAll();
     if (jsonNotifications != null) {
       Gson gson = buildGson();
       Type type = new TypeToken<NotificationDetails>() {}.getType();
@@ -467,7 +466,11 @@ public class FlutterLocalNotificationsPlugin
       Context context,
       final NotificationDetails notificationDetails,
       Boolean updateScheduledNotificationsCache) {
-    scheduleNotificationAtTime(context, notificationDetails, notificationDetails.millisecondsSinceEpoch, updateScheduledNotificationsCache);
+    scheduleNotificationAtTime(
+        context,
+        notificationDetails,
+        notificationDetails.millisecondsSinceEpoch,
+        updateScheduledNotificationsCache);
   }
 
   private static void zonedScheduleNotification(
@@ -475,31 +478,32 @@ public class FlutterLocalNotificationsPlugin
       final NotificationDetails notificationDetails,
       Boolean updateScheduledNotificationsCache) {
     long epochMilli =
-            VERSION.SDK_INT >= VERSION_CODES.O
-                    ? ZonedDateTime.of(
+        VERSION.SDK_INT >= VERSION_CODES.O
+            ? ZonedDateTime.of(
                     LocalDateTime.parse(notificationDetails.scheduledDateTime),
                     ZoneId.of(notificationDetails.timeZoneName))
-                    .toInstant()
-                    .toEpochMilli()
-                    : org.threeten.bp.ZonedDateTime.of(
+                .toInstant()
+                .toEpochMilli()
+            : org.threeten.bp.ZonedDateTime.of(
                     org.threeten.bp.LocalDateTime.parse(notificationDetails.scheduledDateTime),
                     org.threeten.bp.ZoneId.of(notificationDetails.timeZoneName))
-                    .toInstant()
-                    .toEpochMilli();
-    scheduleNotificationAtTime(context, notificationDetails, epochMilli, updateScheduledNotificationsCache);
+                .toInstant()
+                .toEpochMilli();
+    scheduleNotificationAtTime(
+        context, notificationDetails, epochMilli, updateScheduledNotificationsCache);
   }
 
   private static void scheduleNotificationAtTime(
-          Context context,
-          NotificationDetails notificationDetails,
-          long epochMilli,
-          Boolean updateScheduledNotificationsCache) {
+      Context context,
+      NotificationDetails notificationDetails,
+      long epochMilli,
+      Boolean updateScheduledNotificationsCache) {
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
     Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
     PendingIntent pendingIntent =
-            getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
+        getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
 
     AlarmManager alarmManager = getAlarmManager(context);
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
@@ -1445,11 +1449,12 @@ public class FlutterLocalNotificationsPlugin
     zonedScheduleDetails(result, notificationDetails, applicationContext);
   }
 
-  private static void zonedScheduleDetails(Result result, NotificationDetails notificationDetails, Context applicationContext) {
+  private static void zonedScheduleDetails(
+      Result result, NotificationDetails notificationDetails, Context applicationContext) {
     if (notificationDetails != null) {
       if (notificationDetails.matchDateTimeComponents != null) {
         notificationDetails.scheduledDateTime =
-                getNextFireDateMatchingDateTimeComponents(notificationDetails);
+            getNextFireDateMatchingDateTimeComponents(notificationDetails);
       }
       zonedScheduleNotification(applicationContext, notificationDetails, true);
       result.success(null);
@@ -1459,7 +1464,8 @@ public class FlutterLocalNotificationsPlugin
   private void zonedScheduleMultiple(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
     boolean replace = arguments.get(REPLACE);
-    ArrayList<NotificationDetails> multiNotificationDetails = extractMultipleNotificationDetails(result, arguments);
+    ArrayList<NotificationDetails> multiNotificationDetails =
+        extractMultipleNotificationDetails(result, arguments);
 
     if (replace) {
       cancelAllPendingNotifications();
@@ -1642,14 +1648,11 @@ public class FlutterLocalNotificationsPlugin
     result.success(null);
   }
 
-  /**
-   * Cancels all pending notifications without parsing any JSON
-   */
+  /** Cancels all pending notifications without parsing any JSON */
   private void cancelAllPendingNotifications() {
     SharedPreferences sharedPreferences =
         applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    Map<String, String> jsonNotifications =
-            (Map<String, String>) sharedPreferences.getAll();
+    Map<String, String> jsonNotifications = (Map<String, String>) sharedPreferences.getAll();
 
     if (jsonNotifications.isEmpty()) {
       return;
@@ -1660,8 +1663,7 @@ public class FlutterLocalNotificationsPlugin
     for (String id : jsonNotifications.keySet()) {
       // TODO filter out non-matching IDs
       int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length() - 1));
-      PendingIntent pendingIntent =
-          getBroadcastPendingIntent(applicationContext, intId, intent);
+      PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, intId, intent);
       alarmManager.cancel(pendingIntent);
     }
 
