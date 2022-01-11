@@ -121,6 +121,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String SHOW_METHOD = "show";
   private static final String CANCEL_METHOD = "cancel";
   private static final String CANCEL_ALL_METHOD = "cancelAll";
+  private static final String CANCEL_ALL_PENDING_METHOD = "cancelAllPending";
   private static final String SCHEDULE_METHOD = "schedule";
   private static final String ZONED_SCHEDULE_METHOD = "zonedSchedule";
   private static final String PERIODICALLY_SHOW_METHOD = "periodicallyShow";
@@ -1364,6 +1365,9 @@ public class FlutterLocalNotificationsPlugin
       case CANCEL_ALL_METHOD:
         cancelAllNotifications(result);
         break;
+      case CANCEL_ALL_PENDING_METHOD:
+        cancelAllPendingNotifications(result);
+        break;
       case PENDING_NOTIFICATION_REQUESTS_METHOD:
         pendingNotificationRequests(result);
         break;
@@ -1632,6 +1636,12 @@ public class FlutterLocalNotificationsPlugin
         && !isValidDrawableResource(applicationContext, icon, result, INVALID_ICON_ERROR_CODE);
   }
 
+  /**
+   * Cancels a single notification by ID
+   *
+   * @param id
+   * @param tag
+   */
   private void cancelNotification(Integer id, String tag) {
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
     PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, id, intent);
@@ -1646,21 +1656,22 @@ public class FlutterLocalNotificationsPlugin
     removeNotificationFromCache(applicationContext, id);
   }
 
-  private void cancelAllNotifications(Result result) {
-    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
-    notificationManager.cancelAll();
+  /**
+   * Cancels only all pending notifications, leaving active ones.
+   */
+  private void cancelAllPendingNotifications(Result result) {
     ArrayList<NotificationDetails> scheduledNotifications =
-        loadScheduledNotifications(applicationContext);
-    if (scheduledNotifications == null || scheduledNotifications.isEmpty()) {
+            loadScheduledNotifications(applicationContext);
+    if (scheduledNotifications.isEmpty()) {
       result.success(null);
       return;
     }
 
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
+    AlarmManager alarmManager = getAlarmManager(applicationContext);
     for (NotificationDetails scheduledNotification : scheduledNotifications) {
       PendingIntent pendingIntent =
-          getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
-      AlarmManager alarmManager = getAlarmManager(applicationContext);
+              getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
       alarmManager.cancel(pendingIntent);
     }
 
@@ -1670,6 +1681,18 @@ public class FlutterLocalNotificationsPlugin
     editor.remove(SCHEDULED_NOTIFICATIONS_SET);
     editor.apply();
     result.success(null);
+  }
+
+  /**
+   * Cancels all notifications, both scheduled and active
+   *
+   * @param result
+   */
+  private void cancelAllNotifications(Result result) {
+    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
+    notificationManager.cancelAll();
+
+    cancelAllPendingNotifications(result);
   }
 
   @Override
