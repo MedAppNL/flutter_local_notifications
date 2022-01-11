@@ -412,11 +412,11 @@ public class FlutterLocalNotificationsPlugin
   /**
    * Get scheduled notifications from shared preferences, converting from old format if present.
    *
-   * Returns null if neither are present
-   * The returned Set may not be mutated!
+   * <p>Returns null if neither are present The returned Set may not be mutated!
    */
   private static Set<String> getScheduledNotificationsJsonSet(SharedPreferences sharedPreferences) {
-    Set<String> jsonNotifications = sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
+    Set<String> jsonNotifications =
+        sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
     if (jsonNotifications != null) {
       return jsonNotifications;
     }
@@ -1656,12 +1656,10 @@ public class FlutterLocalNotificationsPlugin
     removeNotificationFromCache(applicationContext, id);
   }
 
-  /**
-   * Cancels only all pending notifications, leaving active ones.
-   */
+  /** Cancels only all pending notifications, leaving active ones. */
   private void cancelAllPendingNotifications(Result result) {
     ArrayList<NotificationDetails> scheduledNotifications =
-            loadScheduledNotifications(applicationContext);
+        loadScheduledNotifications(applicationContext);
     if (scheduledNotifications.isEmpty()) {
       result.success(null);
       return;
@@ -1671,12 +1669,12 @@ public class FlutterLocalNotificationsPlugin
     AlarmManager alarmManager = getAlarmManager(applicationContext);
     for (NotificationDetails scheduledNotification : scheduledNotifications) {
       PendingIntent pendingIntent =
-              getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
+          getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
       alarmManager.cancel(pendingIntent);
     }
 
     SharedPreferences sharedPreferences =
-            applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+        applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = sharedPreferences.edit();
     editor.remove(SCHEDULED_NOTIFICATIONS_SET);
     editor.apply();
