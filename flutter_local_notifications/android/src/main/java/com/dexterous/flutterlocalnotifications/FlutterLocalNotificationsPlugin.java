@@ -154,6 +154,7 @@ public class FlutterLocalNotificationsPlugin
           + " your Android head project.";
   private static final String CANCEL_ID = "id";
   private static final String CANCEL_TAG = "tag";
+  private static final String REPLACE = "replace";
   static String NOTIFICATION_DETAILS = "notificationDetails";
   static Gson gson;
   private MethodChannel channel;
@@ -1354,7 +1355,7 @@ public class FlutterLocalNotificationsPlugin
         cancelAllNotifications(result);
         break;
       case CANCEL_ALL_PENDING_METHOD:
-        cancelAllPendingNotifications(result);
+        cancelAllPending(result);
         break;
       case PENDING_NOTIFICATION_REQUESTS_METHOD:
         pendingNotificationRequests(result);
@@ -1468,13 +1469,31 @@ public class FlutterLocalNotificationsPlugin
   private void zonedSchedule(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
     NotificationDetails notificationDetails = extractNotificationDetails(result, arguments);
+    zonedScheduleDetails(result, notificationDetails, applicationContext);
+  }
+
+  private static void zonedScheduleDetails(Result result, NotificationDetails notificationDetails, Context applicationContext) {
     if (notificationDetails != null) {
       if (notificationDetails.matchDateTimeComponents != null) {
         notificationDetails.scheduledDateTime =
-            getNextFireDateMatchingDateTimeComponents(notificationDetails);
+                getNextFireDateMatchingDateTimeComponents(notificationDetails);
       }
       zonedScheduleNotification(applicationContext, notificationDetails, true);
       result.success(null);
+    }
+  }
+
+  private void zonedScheduleMultiple(MethodCall call, Result result) {
+    Map<String, Object> arguments = call.arguments();
+    boolean replace = arguments.get(REPLACE);
+    ArrayList<NotificationDetails> multiNotificationDetails = extractMultipleNotificationDetails(result, arguments);
+
+    if (replace) {
+      cancelAllPendingNotifications();
+    }
+
+    for (NotificationDetails notificationDetails : multiNotificationDetails) {
+      zonedScheduleDetails(result, notificationDetails, applicationContext);
     }
   }
 
@@ -1645,11 +1664,15 @@ public class FlutterLocalNotificationsPlugin
   }
 
   /** Cancels only all pending notifications, leaving active ones. */
-  private void cancelAllPendingNotifications(Result result) {
+  private void cancelAllPending(Result result) {
+    cancelAllPendingNotifications();
+    result.success(null);
+  }
+
+  private void cancelAllPendingNotifications() {
     ArrayList<NotificationDetails> scheduledNotifications =
         loadScheduledNotifications(applicationContext);
     if (scheduledNotifications.isEmpty()) {
-      result.success(null);
       return;
     }
 
@@ -1666,7 +1689,6 @@ public class FlutterLocalNotificationsPlugin
     SharedPreferences.Editor editor = sharedPreferences.edit();
     editor.remove(SCHEDULED_NOTIFICATIONS_SET);
     editor.apply();
-    result.success(null);
   }
 
   /**
@@ -1678,7 +1700,7 @@ public class FlutterLocalNotificationsPlugin
     NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
     notificationManager.cancelAll();
 
-    cancelAllPendingNotifications(result);
+    cancelAllPending(result);
   }
 
   @Override
