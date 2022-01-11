@@ -26,7 +26,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.core.app.AlarmManagerCompat;
@@ -433,9 +432,6 @@ public class FlutterLocalNotificationsPlugin
     String[] jsonNotificationsToSave = new String[amount];
     for (int i = 0; i < amount; i++) {
       jsonNotificationsToSave[i] = gson.toJson(notificationsList.get(i));
-      if (i == 0) {
-        logLongJson(jsonNotificationsToSave[i]);
-      }
     }
     Set<String> scheduledNotifications = Set.of(jsonNotificationsToSave);
     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -443,24 +439,6 @@ public class FlutterLocalNotificationsPlugin
     editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, scheduledNotifications);
     editor.apply();
     return scheduledNotifications;
-  }
-
-  private static void logLongJson(String json) {
-    String TAG = "json_example";
-    if (json.length() > 4000) {
-      Log.v(TAG, "sb.length = " + json.length());
-      int chunkCount = json.length() / 4000;     // integer division
-      for (int i = 0; i <= chunkCount; i++) {
-        int max = 4000 * (i + 1);
-        if (max >= json.length()) {
-          Log.v(TAG, json.substring(4000 * i));
-        } else {
-          Log.v(TAG, json.substring(4000 * i, max));
-        }
-      }
-    } else {
-      Log.v(TAG, json);
-    }
   }
 
   private static void saveScheduledNotifications(
