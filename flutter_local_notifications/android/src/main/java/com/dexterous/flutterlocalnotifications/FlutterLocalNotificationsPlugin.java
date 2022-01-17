@@ -465,8 +465,18 @@ public class FlutterLocalNotificationsPlugin
 
     AlarmManager alarmManager = getAlarmManager(context);
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setAlarmClock(
-          alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
+      // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
+      //   are not cancelled by AlarmManager.
+      if (VERSION.SDK_INT >= VERSION_CODES.S) {
+        AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager,
+                AlarmManager.RTC_WAKEUP,
+                notificationDetails.millisecondsSinceEpoch,
+                pendingIntent);
+      } else {
+        AlarmManagerCompat.setAlarmClock(
+                alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
+      }
     } else {
       AlarmManagerCompat.setExact(
           alarmManager,
@@ -504,7 +514,17 @@ public class FlutterLocalNotificationsPlugin
                 .toInstant()
                 .toEpochMilli();
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
+      // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
+      //   are not cancelled by AlarmManager.
+      if (VERSION.SDK_INT >= VERSION_CODES.S) {
+        AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager,
+                AlarmManager.RTC_WAKEUP,
+                epochMilli,
+                pendingIntent);
+      } else {
+        AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
+      }
     } else {
       AlarmManagerCompat.setExact(alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
     }
@@ -526,8 +546,18 @@ public class FlutterLocalNotificationsPlugin
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
     AlarmManager alarmManager = getAlarmManager(context);
-    AlarmManagerCompat.setAlarmClock(
-        alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+    // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
+    //   are not cancelled by AlarmManager.
+    if (VERSION.SDK_INT >= VERSION_CODES.S) {
+      AlarmManagerCompat.setExactAndAllowWhileIdle(
+              alarmManager,
+              AlarmManager.RTC_WAKEUP,
+              notificationTriggerTime,
+              pendingIntent);
+    } else {
+      AlarmManagerCompat.setAlarmClock(
+              alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+    }
     saveScheduledNotification(context, notificationDetails);
   }
 
@@ -571,8 +601,18 @@ public class FlutterLocalNotificationsPlugin
     AlarmManager alarmManager = getAlarmManager(context);
 
     if (BooleanUtils.getValue(notificationDetails.allowWhileIdle)) {
-      AlarmManagerCompat.setAlarmClock(
-          alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+      // Workaround for Android 12 issue regarding extra com.android.systemui alarms that
+      //   are not cancelled by AlarmManager.
+      if (VERSION.SDK_INT >= VERSION_CODES.S) {
+        AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager,
+                AlarmManager.RTC_WAKEUP,
+                notificationTriggerTime,
+                pendingIntent);
+      } else {
+        AlarmManagerCompat.setAlarmClock(
+                alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+      }
     } else {
       alarmManager.setInexactRepeating(
           AlarmManager.RTC_WAKEUP, notificationTriggerTime, repeatInterval, pendingIntent);
