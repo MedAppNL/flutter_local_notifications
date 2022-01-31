@@ -26,6 +26,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.core.app.AlarmManagerCompat;
@@ -564,6 +565,7 @@ public class FlutterLocalNotificationsPlugin
     if (VERSION.SDK_INT >= VERSION_CODES.M) {
       flags |= PendingIntent.FLAG_IMMUTABLE;
     }
+    intent.setAction(ScheduledNotificationReceiver.BROADCAST_SCHEDULED_NOTIFICATION);
     return PendingIntent.getBroadcast(context, id, intent, flags);
   }
 
@@ -1494,15 +1496,21 @@ public class FlutterLocalNotificationsPlugin
   private void getNotificationAppLaunchDetails(Result result) {
     Map<String, Object> notificationAppLaunchDetails = new HashMap<>();
     String payload = null;
+    String payload_alt = null;
     Boolean notificationLaunchedApp =
         mainActivity != null
             && SELECT_NOTIFICATION.equals(mainActivity.getIntent().getAction())
             && !launchedActivityFromHistory(mainActivity.getIntent());
     notificationAppLaunchDetails.put(NOTIFICATION_LAUNCHED_APP, notificationLaunchedApp);
+    payload = launchIntent.getStringExtra(PAYLOAD);
+    payload_alt = mainActivity.getIntent().getStringExtra(PAYLOAD);
     if (notificationLaunchedApp) {
-      payload = launchIntent.getStringExtra(PAYLOAD);
+      notificationAppLaunchDetails.put(PAYLOAD, payload);
+    } else {
+      notificationAppLaunchDetails.put(PAYLOAD, null);
     }
-    notificationAppLaunchDetails.put(PAYLOAD, payload);
+    Log.i("FLN", "Payload: " + payload);
+    Log.i("FLN", "Payload alt: " + payload_alt);
     result.success(notificationAppLaunchDetails);
   }
 
