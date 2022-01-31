@@ -564,6 +564,7 @@ public class FlutterLocalNotificationsPlugin
     if (VERSION.SDK_INT >= VERSION_CODES.M) {
       flags |= PendingIntent.FLAG_IMMUTABLE;
     }
+    intent.setAction(ScheduledNotificationReceiver.BROADCAST_SCHEDULED_NOTIFICATION);
     return PendingIntent.getBroadcast(context, id, intent, flags);
   }
 
