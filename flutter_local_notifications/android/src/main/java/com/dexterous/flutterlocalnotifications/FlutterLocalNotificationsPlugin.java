@@ -26,6 +26,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
@@ -404,12 +405,16 @@ public class FlutterLocalNotificationsPlugin
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    Map<String, String> jsonNotifications = (Map<String, String>) sharedPreferences.getAll();
-    if (jsonNotifications != null) {
-      Gson gson = buildGson();
-      Type type = new TypeToken<NotificationDetails>() {}.getType();
-      for (String json : jsonNotifications.values()) {
+    Map<String, ?> jsonNotifications = sharedPreferences.getAll();
+    Log.v("FLN", "Got all " + jsonNotifications.size() + " notification JSONs");
+    Gson gson = buildGson();
+    Type type = new TypeToken<NotificationDetails>() {}.getType();
+    for (Object value : jsonNotifications.values()) {
+      if (value instanceof String) {
+        String json = (String) value;
         scheduledNotifications.add(gson.fromJson(json, type));
+      } else {
+        Log.v("FLN", "Found non-string value: " + value);
       }
     }
     return scheduledNotifications;
@@ -452,9 +457,9 @@ public class FlutterLocalNotificationsPlugin
   //    return scheduledNotifications;
   //  }
   static void removeNotificationFromCache(Context context, Integer notificationId) {
-    SharedPreferences sharedPreferences1 =
+    SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences1.edit();
+    SharedPreferences.Editor editor = sharedPreferences.edit();
     editor.remove(SCHEDULED_NOTIFICATIONS_ID + notificationId);
     editor.apply();
   }
@@ -663,7 +668,6 @@ public class FlutterLocalNotificationsPlugin
     return repeatInterval;
   }
 
-  // Note: This will now allow duplicate notifications on ID which would be overwritten before.
   private static void saveScheduledNotification(
       Context context, NotificationDetails notificationDetails) {
     SharedPreferences sharedPreferences =
