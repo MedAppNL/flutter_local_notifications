@@ -26,6 +26,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.core.app.AlarmManagerCompat;
@@ -36,6 +37,7 @@ import androidx.core.app.Person;
 import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.IconCompat;
+
 import com.dexterous.flutterlocalnotifications.isolate.IsolatePreferences;
 import com.dexterous.flutterlocalnotifications.models.BitmapSource;
 import com.dexterous.flutterlocalnotifications.models.DateTimeComponents;
@@ -62,17 +64,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jakewharton.threetenabp.AndroidThreeTen;
-import io.flutter.FlutterInjector;
-import io.flutter.embedding.engine.loader.FlutterLoader;
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.embedding.engine.plugins.activity.ActivityAware;
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -86,7 +78,18 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
+import io.flutter.FlutterInjector;
+import io.flutter.embedding.engine.loader.FlutterLoader;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.BinaryMessenger;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry;
 
 /** FlutterLocalNotificationsPlugin */
 @Keep
@@ -413,39 +416,41 @@ public class FlutterLocalNotificationsPlugin
   }
 
   // TODO rewrite migration code
+
   /**
    * Get scheduled notifications from shared preferences, converting from old format if present.
    *
    * <p>Returns null if neither are present The returned Set may not be mutated!
    */
-  private static Set<String> getScheduledNotificationsJsonSet(SharedPreferences sharedPreferences) {
-    Set<String> jsonNotifications =
-        sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
-    if (jsonNotifications != null) {
-      return jsonNotifications;
-    }
-    String notificationsJson = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS_STRING, null);
-    if (notificationsJson == null) {
-      return null;
-    }
-
-    // Convert (once) from the old format to the new format and delete the old
-    Gson gson = buildGson();
-    Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
-    ArrayList<NotificationDetails> notificationsList = gson.fromJson(notificationsJson, type);
-    int amount = notificationsList.size();
-    String[] jsonNotificationsToSave = new String[amount];
-    for (int i = 0; i < amount; i++) {
-      jsonNotificationsToSave[i] = gson.toJson(notificationsList.get(i));
-    }
-    Set<String> scheduledNotifications = Set.of(jsonNotificationsToSave);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.remove(SCHEDULED_NOTIFICATIONS_STRING);
-    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, scheduledNotifications);
-    editor.apply();
-    return scheduledNotifications;
-  }
-
+  //  private static Set<String> getScheduledNotificationsJsonSet(SharedPreferences
+  // sharedPreferences) {
+  //    Set<String> jsonNotifications =
+  //        sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
+  //    if (jsonNotifications != null) {
+  //      return jsonNotifications;
+  //    }
+  //    String notificationsJson = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS_STRING,
+  // null);
+  //    if (notificationsJson == null) {
+  //      return null;
+  //    }
+  //
+  //    // Convert (once) from the old format to the new format and delete the old
+  //    Gson gson = buildGson();
+  //    Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
+  //    ArrayList<NotificationDetails> notificationsList = gson.fromJson(notificationsJson, type);
+  //    int amount = notificationsList.size();
+  //    String[] jsonNotificationsToSave = new String[amount];
+  //    for (int i = 0; i < amount; i++) {
+  //      jsonNotificationsToSave[i] = gson.toJson(notificationsList.get(i));
+  //    }
+  //    Set<String> scheduledNotifications = Set.of(jsonNotificationsToSave);
+  //    SharedPreferences.Editor editor = sharedPreferences.edit();
+  //    editor.remove(SCHEDULED_NOTIFICATIONS_STRING);
+  //    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, scheduledNotifications);
+  //    editor.apply();
+  //    return scheduledNotifications;
+  //  }
   static void removeNotificationFromCache(Context context, Integer notificationId) {
     SharedPreferences sharedPreferences1 =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
@@ -1495,20 +1500,20 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  private void zonedScheduleMultiple(MethodCall call, Result result) {
-    Map<String, Object> arguments = call.arguments();
-    boolean replace = arguments.get(REPLACE);
-    ArrayList<NotificationDetails> multiNotificationDetails =
-        extractMultipleNotificationDetails(result, arguments);
-
-    if (replace) {
-      cancelAllPendingNotifications();
-    }
-
-    for (NotificationDetails notificationDetails : multiNotificationDetails) {
-      zonedScheduleDetails(result, notificationDetails, applicationContext);
-    }
-  }
+  //  private void zonedScheduleMultiple(MethodCall call, Result result) {
+  //    Map<String, Object> arguments = call.arguments();
+  //    boolean replace = arguments.get(REPLACE);
+  //    ArrayList<NotificationDetails> multiNotificationDetails =
+  //        extractMultipleNotificationDetails(result, arguments);
+  //
+  //    if (replace) {
+  //      cancelAllPendingNotifications();
+  //    }
+  //
+  //    for (NotificationDetails notificationDetails : multiNotificationDetails) {
+  //      zonedScheduleDetails(result, notificationDetails, applicationContext);
+  //    }
+  //  }
 
   private void show(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
@@ -1706,11 +1711,7 @@ public class FlutterLocalNotificationsPlugin
     editor.apply();
   }
 
-  /**
-   * Cancels all notifications, both scheduled and active
-   *
-   * @param result
-   */
+  /** Cancels all notifications, both scheduled and active */
   private void cancelAllNotifications(Result result) {
     NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
     notificationManager.cancelAll();
