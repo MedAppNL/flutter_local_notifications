@@ -470,13 +470,13 @@ public class FlutterLocalNotificationsPlugin
       //   are not cancelled by AlarmManager.
       if (VERSION.SDK_INT >= VERSION_CODES.S) {
         AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                notificationDetails.millisecondsSinceEpoch,
-                pendingIntent);
+            alarmManager,
+            AlarmManager.RTC_WAKEUP,
+            notificationDetails.millisecondsSinceEpoch,
+            pendingIntent);
       } else {
         AlarmManagerCompat.setAlarmClock(
-                alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
+            alarmManager, notificationDetails.millisecondsSinceEpoch, pendingIntent, pendingIntent);
       }
     } else {
       AlarmManagerCompat.setExact(
@@ -519,10 +519,7 @@ public class FlutterLocalNotificationsPlugin
       //   are not cancelled by AlarmManager.
       if (VERSION.SDK_INT >= VERSION_CODES.S) {
         AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                epochMilli,
-                pendingIntent);
+            alarmManager, AlarmManager.RTC_WAKEUP, epochMilli, pendingIntent);
       } else {
         AlarmManagerCompat.setAlarmClock(alarmManager, epochMilli, pendingIntent, pendingIntent);
       }
@@ -551,13 +548,10 @@ public class FlutterLocalNotificationsPlugin
     //   are not cancelled by AlarmManager.
     if (VERSION.SDK_INT >= VERSION_CODES.S) {
       AlarmManagerCompat.setExactAndAllowWhileIdle(
-              alarmManager,
-              AlarmManager.RTC_WAKEUP,
-              notificationTriggerTime,
-              pendingIntent);
+          alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
     } else {
       AlarmManagerCompat.setAlarmClock(
-              alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+          alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
     }
     saveScheduledNotification(context, notificationDetails);
   }
@@ -607,13 +601,10 @@ public class FlutterLocalNotificationsPlugin
       //   are not cancelled by AlarmManager.
       if (VERSION.SDK_INT >= VERSION_CODES.S) {
         AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                notificationTriggerTime,
-                pendingIntent);
+            alarmManager, AlarmManager.RTC_WAKEUP, notificationTriggerTime, pendingIntent);
       } else {
         AlarmManagerCompat.setAlarmClock(
-                alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
+            alarmManager, notificationTriggerTime, pendingIntent, pendingIntent);
       }
     } else {
       alarmManager.setInexactRepeating(
