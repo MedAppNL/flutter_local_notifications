@@ -1496,15 +1496,25 @@ public class FlutterLocalNotificationsPlugin
             && SELECT_NOTIFICATION.equals(mainActivity.getIntent().getAction())
             && !launchedActivityFromHistory(mainActivity.getIntent());
     notificationAppLaunchDetails.put(NOTIFICATION_LAUNCHED_APP, notificationLaunchedApp);
-    payload = launchIntent.getStringExtra(PAYLOAD);
-    payload_alt = mainActivity.getIntent().getStringExtra(PAYLOAD);
+    if (mainActivity != null) {
+      payload_alt = mainActivity.getIntent().getStringExtra(PAYLOAD);
+      Log.i("FLN", "mainActivity payload alt: " + payload_alt);
+    } else {
+      Log.i("FLN", "mainActivity is null");
+    }
+
     if (notificationLaunchedApp) {
-      notificationAppLaunchDetails.put(PAYLOAD, payload);
+      if (launchIntent != null) {
+        payload = launchIntent.getStringExtra(PAYLOAD);
+        Log.i("FLN", "Payload: " + payload);
+        notificationAppLaunchDetails.put(PAYLOAD, payload);
+      } else {
+        Log.i("FLN", "Error, launchIntent is null but shouldn't be!");
+      }
     } else {
       notificationAppLaunchDetails.put(PAYLOAD, null);
     }
-    Log.i("FLN", "Payload: " + payload);
-    Log.i("FLN", "Payload alt: " + payload_alt);
+
     result.success(notificationAppLaunchDetails);
   }
 
