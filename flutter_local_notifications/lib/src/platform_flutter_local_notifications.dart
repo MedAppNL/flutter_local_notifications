@@ -605,56 +605,6 @@ class IOSFlutterLocalNotificationsPlugin
                 }));
   }
 
-  /// Shows a notification on a daily interval at the specified time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showDailyAtTime(
-    int id,
-    String? title,
-    String? body,
-    Time notificationTime,
-    DarwinNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('showDailyAtTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.daily.index,
-      'repeatTime': notificationTime.toMap(),
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
-  }
-
-  /// Shows a notification on weekly interval at the specified day and time.
-  @Deprecated(
-      'Deprecated due to problems with time zones. Use zonedSchedule instead.')
-  Future<void> showWeeklyAtDayAndTime(
-    int id,
-    String? title,
-    String? body,
-    Day day,
-    Time notificationTime,
-    DarwinNotificationDetails? notificationDetails, {
-    String? payload,
-  }) async {
-    validateId(id);
-    await _channel.invokeMethod('showWeeklyAtDayAndTime', <String, Object?>{
-      'id': id,
-      'title': title,
-      'body': body,
-      'calledAt': clock.now().millisecondsSinceEpoch,
-      'repeatInterval': RepeatInterval.weekly.index,
-      'repeatTime': notificationTime.toMap(),
-      'day': day.value,
-      'platformSpecifics': notificationDetails?.toMap(),
-      'payload': payload ?? ''
-    });
-  }
-
   @override
   Future<void> show(
     int id,
