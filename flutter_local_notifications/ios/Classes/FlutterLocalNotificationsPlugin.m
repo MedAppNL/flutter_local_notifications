@@ -29,6 +29,7 @@ NSString *const SHOW_DAILY_AT_TIME_METHOD = @"showDailyAtTime";
 NSString *const SHOW_WEEKLY_AT_DAY_AND_TIME_METHOD = @"showWeeklyAtDayAndTime";
 NSString *const CANCEL_METHOD = @"cancel";
 NSString *const CANCEL_ALL_METHOD = @"cancelAll";
+NSString *const CANCEL_ALL_PENDING_METHOD = @"cancelAllPending";
 NSString *const PENDING_NOTIFICATIONS_REQUESTS_METHOD =
     @"pendingNotificationRequests";
 NSString *const GET_ACTIVE_NOTIFICATIONS_METHOD = @"getActiveNotifications";
@@ -173,6 +174,8 @@ static FlutterError *getFlutterError(NSError *error) {
     [self cancel:((NSNumber *)call.arguments) result:result];
   } else if ([CANCEL_ALL_METHOD isEqualToString:call.method]) {
     [self cancelAll:result];
+  } else if ([CANCEL_ALL_PENDING_METHOD isEqualToString:call.method]) {
+    [self cancelAllPending:result];
   } else if ([GET_NOTIFICATION_APP_LAUNCH_DETAILS_METHOD
                  isEqualToString:call.method]) {
     NSString *payload;
@@ -775,6 +778,17 @@ static FlutterError *getFlutterError(NSError *error) {
         break;
       }
     }
+  }
+  result(nil);
+}
+
+- (void)cancelAllPending:(FlutterResult _Nonnull)result {
+  if (@available(iOS 10.0, *)) {
+    UNUserNotificationCenter *center =
+        [UNUserNotificationCenter currentNotificationCenter];
+    [center removeAllPendingNotificationRequests];
+  } else {
+    [[UIApplication sharedApplication] cancelAllLocalNotifications];
   }
   result(nil);
 }
