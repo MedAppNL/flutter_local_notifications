@@ -103,7 +103,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String DRAWABLE = "drawable";
   private static final String DEFAULT_ICON = "defaultIcon";
   private static final String SELECT_NOTIFICATION = "SELECT_NOTIFICATION";
-  private static final String SCHEDULED_NOTIFICATIONS_FILE = "scheduled_notifications";
+  private static final String SCHEDULED_NOTIFICATIONS_FILE = "scheduled_notifications_file";
   private static final String SCHEDULED_NOTIFICATIONS_STRING = "scheduled_notifications";
   private static final String SCHEDULED_NOTIFICATIONS_ID = "snid";
   private static final String INITIALIZE_METHOD = "initialize";
@@ -126,6 +126,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String CANCEL_ALL_PENDING_METHOD = "cancelAllPending";
   private static final String SCHEDULE_METHOD = "schedule";
   private static final String ZONED_SCHEDULE_METHOD = "zonedSchedule";
+  private static final String ZONED_SCHEDULE_BATCH_METHOD = "zonedScheduleBatch";
   private static final String PERIODICALLY_SHOW_METHOD = "periodicallyShow";
   private static final String SHOW_DAILY_AT_TIME_METHOD = "showDailyAtTime";
   private static final String SHOW_WEEKLY_AT_DAY_AND_TIME_METHOD = "showWeeklyAtDayAndTime";
@@ -1353,6 +1354,11 @@ public class FlutterLocalNotificationsPlugin
           zonedSchedule(call, result);
           break;
         }
+      case ZONED_SCHEDULE_BATCH_METHOD:
+      {
+        zonedScheduleBatch(call, result);
+        break;
+      }
       case PERIODICALLY_SHOW_METHOD:
       case SHOW_DAILY_AT_TIME_METHOD:
       case SHOW_WEEKLY_AT_DAY_AND_TIME_METHOD:
@@ -1496,20 +1502,27 @@ public class FlutterLocalNotificationsPlugin
     }
   }
 
-  //  private void zonedScheduleMultiple(MethodCall call, Result result) {
-  //    Map<String, Object> arguments = call.arguments();
-  //    boolean replace = arguments.get(REPLACE);
-  //    ArrayList<NotificationDetails> multiNotificationDetails =
-  //        extractMultipleNotificationDetails(result, arguments);
-  //
-  //    if (replace) {
-  //      cancelAllPendingNotifications();
-  //    }
-  //
-  //    for (NotificationDetails notificationDetails : multiNotificationDetails) {
-  //      zonedScheduleDetails(result, notificationDetails, applicationContext);
-  //    }
-  //  }
+  private void zonedScheduleBatch(MethodCall call, Result result) {
+    ArrayList<Map<String, Object>> arguments = call.arguments();
+    ArrayList<NotificationDetails> requests = new ArrayList<>();
+
+    for (Map<String, Object> arg : arguments) {
+      NotificationDetails details = extractNotificationDetails(result, arg);
+      if (details == null) {
+        return;
+      }
+      requests.add(details);
+    }
+
+    for (NotificationDetails details : requests) {
+      if (details.matchDateTimeComponents != null) {
+        details.scheduledDateTime =
+                getNextFireDateMatchingDateTimeComponents(details);
+      }
+      zonedScheduleNotification(applicationContext, details, true);
+    }
+    result.success(null);
+  }
 
   private void show(MethodCall call, Result result) {
     Map<String, Object> arguments = call.arguments();
