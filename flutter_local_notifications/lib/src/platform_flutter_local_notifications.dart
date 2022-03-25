@@ -40,6 +40,9 @@ class MethodChannelFlutterLocalNotificationsPlugin
   Future<void> cancelAll() => _channel.invokeMethod('cancelAll');
 
   @override
+  Future<void> cancelAllPending() => _channel.invokeMethod('cancelAllPending');
+
+  @override
   Future<NotificationAppLaunchDetails?>
       getNotificationAppLaunchDetails() async {
     final Map<dynamic, dynamic>? result =
