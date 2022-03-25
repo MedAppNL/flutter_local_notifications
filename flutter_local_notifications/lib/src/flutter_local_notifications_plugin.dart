@@ -360,6 +360,21 @@ class FlutterLocalNotificationsPlugin {
     }
   }
 
+  Future<void> zonedScheduleBatch(List<NotificationRequest> requests) async {
+    if (kIsWeb) {
+      return;
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()!
+          .zonedScheduleBatch(requests);
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()!
+          .zonedScheduleBatch(requests);
+    }
+  }
+
   /// Periodically show a notification using the specified interval.
   ///
   /// For example, specifying a hourly interval means the first time the
@@ -432,13 +447,7 @@ class FlutterLocalNotificationsPlugin {
           ?.showDailyAtTime(
               id, title, body, notificationTime, notificationDetails.android,
               payload: payload);
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      await resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.showDailyAtTime(
-              id, title, body, notificationTime, notificationDetails.iOS,
-              payload: payload);
-    } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+    } else {
       throw UnimplementedError();
     }
   }
@@ -467,13 +476,7 @@ class FlutterLocalNotificationsPlugin {
           ?.showWeeklyAtDayAndTime(id, title, body, day, notificationTime,
               notificationDetails.android,
               payload: payload);
-    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-      await resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.showWeeklyAtDayAndTime(
-              id, title, body, day, notificationTime, notificationDetails.iOS,
-              payload: payload);
-    } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+    } else {
       throw UnimplementedError();
     }
   }

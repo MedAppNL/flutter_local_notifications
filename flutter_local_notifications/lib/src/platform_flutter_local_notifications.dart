@@ -190,6 +190,38 @@ class AndroidFlutterLocalNotificationsPlugin
                 }));
   }
 
+  /// Schedules a batch of notifications to be shown at the specified date
+  /// and time relative to a specific time zone.
+  Future<void> zonedScheduleBatch(List<NotificationRequest> requests) async {
+    final List<Map<String, Object?>> serializedRequests =
+        <Map<String, Object?>>[];
+    for (final NotificationRequest request in requests) {
+      validateId(request.id);
+      validateDateIsInTheFuture(request.date, request.matchDateTimeComponents);
+      final Map<String, Object?> serializedPlatformSpecifics =
+          request.details.android?.toMap() ?? <String, Object>{};
+      serializedPlatformSpecifics['allowWhileIdle'] =
+          request.androidAllowWhileIdle;
+      serializedRequests.add(
+        <String, Object?>{
+          'id': request.id,
+          'title': request.title,
+          'body': request.body,
+          'platformSpecifics': serializedPlatformSpecifics,
+          'payload': request.payload ?? ''
+        }
+          ..addAll(request.date.toMap())
+          ..addAll(request.matchDateTimeComponents == null
+              ? <String, Object>{}
+              : <String, Object>{
+                  'matchDateTimeComponents':
+                      request.matchDateTimeComponents!.index
+                }),
+      );
+    }
+    await _channel.invokeMethod('zonedScheduleBatch', serializedRequests);
+  }
+
   /// Shows a notification on a daily interval at the specified time.
   @Deprecated(
       'Deprecated due to problems with time zones. Use zonedSchedule instead.')
@@ -606,6 +638,36 @@ class IOSFlutterLocalNotificationsPlugin
               : <String, Object>{
                   'matchDateTimeComponents': matchDateTimeComponents.index
                 }));
+  }
+
+  /// Schedules a batch of notifications to be shown at the specified date
+  /// and time relative to a specific time zone.
+  Future<void> zonedScheduleBatch(List<NotificationRequest> requests) async {
+    final List<Map<String, Object?>> serializedRequests =
+        <Map<String, Object?>>[];
+    for (final NotificationRequest request in requests) {
+      validateId(request.id);
+      validateDateIsInTheFuture(request.date, request.matchDateTimeComponents);
+      final Map<String, Object?> serializedPlatformSpecifics =
+          request.details.iOS?.toMap() ?? <String, Object>{};
+      serializedRequests.add(
+        <String, Object?>{
+          'id': request.id,
+          'title': request.title,
+          'body': request.body,
+          'platformSpecifics': serializedPlatformSpecifics,
+          'payload': request.payload ?? '',
+        }
+          ..addAll(request.date.toMap())
+          ..addAll(request.matchDateTimeComponents == null
+              ? <String, Object>{}
+              : <String, Object>{
+                  'matchDateTimeComponents':
+                      request.matchDateTimeComponents!.index
+                }),
+      );
+    }
+    await _channel.invokeMethod('zonedScheduleBatch', serializedRequests);
   }
 
   @override
