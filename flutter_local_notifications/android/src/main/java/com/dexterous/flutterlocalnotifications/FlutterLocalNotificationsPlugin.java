@@ -30,6 +30,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.AlarmManagerCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationCompat.Action.Builder;
@@ -65,6 +66,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jakewharton.threetenabp.AndroidThreeTen;
+
+import org.w3c.dom.Node;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -414,6 +417,7 @@ public class FlutterLocalNotificationsPlugin
   }
 
   private static ArrayList<NotificationDetails> loadScheduledNotifications(Context context) {
+    migrateScheduledNotificationsIfNeeded(context);
     ArrayList<NotificationDetails> scheduledNotifications = new ArrayList<>();
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
@@ -432,42 +436,33 @@ public class FlutterLocalNotificationsPlugin
     return scheduledNotifications;
   }
 
-  // TODO rewrite migration code
+  private static void migrateScheduledNotificationsIfNeeded(Context context) {
+    SharedPreferences sharedPreferences =
+            context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_STRING, Context.MODE_PRIVATE);
+    String json = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS_STRING, null);
+    if (json == null) {
+      Log.i("FLN", "No old notifications to migrate");
+      return;
+    }
+    Gson gson = buildGson();
+    Type type = new TypeToken<ArrayList<NotificationDetails>>(){}.getType();
+    ArrayList<NotificationDetails> oldNotifications = gson.fromJson(json, type);
+    Log.i("FLN", "Migrating " + oldNotifications.size() + " notifications");
+    // Deleting existing new notifications prevents duplicates
+    context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply();
+    Log.i("FLN", "Deleted any currently existing new notifications");
+    for (NotificationDetails notification : oldNotifications) {
+      saveScheduledNotification(context, notification);
+    }
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.remove(SCHEDULED_NOTIFICATIONS_STRING);
+    editor.apply();
+    Log.i("FLN", "Migrated " + oldNotifications.size() + " notifications");
+  }
 
-  /**
-   * Get scheduled notifications from shared preferences, converting from old format if present.
-   *
-   * <p>Returns null if neither are present The returned Set may not be mutated!
-   */
-  //  private static Set<String> getScheduledNotificationsJsonSet(SharedPreferences
-  // sharedPreferences) {
-  //    Set<String> jsonNotifications =
-  //        sharedPreferences.getStringSet(SCHEDULED_NOTIFICATIONS_SET, null);
-  //    if (jsonNotifications != null) {
-  //      return jsonNotifications;
-  //    }
-  //    String notificationsJson = sharedPreferences.getString(SCHEDULED_NOTIFICATIONS_STRING,
-  // null);
-  //    if (notificationsJson == null) {
-  //      return null;
-  //    }
-  //
-  //    // Convert (once) from the old format to the new format and delete the old
-  //    Gson gson = buildGson();
-  //    Type type = new TypeToken<ArrayList<NotificationDetails>>() {}.getType();
-  //    ArrayList<NotificationDetails> notificationsList = gson.fromJson(notificationsJson, type);
-  //    int amount = notificationsList.size();
-  //    String[] jsonNotificationsToSave = new String[amount];
-  //    for (int i = 0; i < amount; i++) {
-  //      jsonNotificationsToSave[i] = gson.toJson(notificationsList.get(i));
-  //    }
-  //    Set<String> scheduledNotifications = Set.of(jsonNotificationsToSave);
-  //    SharedPreferences.Editor editor = sharedPreferences.edit();
-  //    editor.remove(SCHEDULED_NOTIFICATIONS_STRING);
-  //    editor.putStringSet(SCHEDULED_NOTIFICATIONS_SET, scheduledNotifications);
-  //    editor.apply();
-  //    return scheduledNotifications;
-  //  }
   static void removeNotificationFromCache(Context context, Integer notificationId) {
     SharedPreferences sharedPreferences =
         context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
@@ -1373,10 +1368,10 @@ public class FlutterLocalNotificationsPlugin
         cancel(call, result);
         break;
       case CANCEL_ALL_METHOD:
-        cancelAllNotifications(result);
+        cancelAllNotifications(result, applicationContext);
         break;
       case CANCEL_ALL_PENDING_METHOD:
-        cancelAllPending(result);
+        cancelAllPending(result, applicationContext);
         break;
       case PENDING_NOTIFICATION_REQUESTS_METHOD:
         pendingNotificationRequests(result);
@@ -1710,27 +1705,27 @@ public class FlutterLocalNotificationsPlugin
   }
 
   /** Cancels only all pending notifications, leaving active ones. */
-  private void cancelAllPending(Result result) {
-    cancelAllPendingNotifications();
+  private static void cancelAllPending(Result result, Context context) {
+    cancelAllPendingNotifications(context);
     result.success(null);
   }
 
   /** Cancels all pending notifications without parsing any JSON */
-  private void cancelAllPendingNotifications() {
+  private static void cancelAllPendingNotifications(Context context) {
     SharedPreferences sharedPreferences =
-        applicationContext.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
+        context.getSharedPreferences(SCHEDULED_NOTIFICATIONS_FILE, Context.MODE_PRIVATE);
     Map<String, String> jsonNotifications = (Map<String, String>) sharedPreferences.getAll();
 
     if (jsonNotifications.isEmpty()) {
       return;
     }
 
-    Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
-    AlarmManager alarmManager = getAlarmManager(applicationContext);
+    Intent intent = new Intent(context, ScheduledNotificationReceiver.class);
+    AlarmManager alarmManager = getAlarmManager(context);
     for (String id : jsonNotifications.keySet()) {
       // TODO filter out non-matching IDs
       int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length() - 1));
-      PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, intId, intent);
+      PendingIntent pendingIntent = getBroadcastPendingIntent(context, intId, intent);
       alarmManager.cancel(pendingIntent);
     }
 
@@ -1740,11 +1735,11 @@ public class FlutterLocalNotificationsPlugin
   }
 
   /** Cancels all notifications, both scheduled and active */
-  private void cancelAllNotifications(Result result) {
-    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
+  private static void cancelAllNotifications(Result result, Context context) {
+    NotificationManagerCompat notificationManager = getNotificationManager(context);
     notificationManager.cancelAll();
 
-    cancelAllPending(result);
+    cancelAllPending(result, context);
   }
 
   @Override
