@@ -54,11 +54,11 @@ android {
             signingConfig signingConfigs.debug
         }
     }
-
-    // Temporary workaround as per https://issuetracker.google.com/issues/158060799
-    lintOptions {
+    lint {
         checkReleaseBuilds false
     }
+
+    // Temporary workaround as per https://issuetracker.google.com/issues/158060799
 }
 
 flutter {

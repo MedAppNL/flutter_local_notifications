@@ -65,6 +65,11 @@ abstract class FlutterLocalNotificationsPlatform extends PlatformInterface {
     throw UnimplementedError('cancelAll() has not been implemented');
   }
 
+  /// Cancels/removes all pending notifications. This applies to notifications that have been scheduled but not those that have already been presented.
+  Future<void> cancelAllPending() async {
+    throw UnimplementedError('cancelAllPending() has not been implemented');
+  }
+
   /// Returns a list of notifications pending to be delivered/shown
   Future<List<PendingNotificationRequest>> pendingNotificationRequests() {
     throw UnimplementedError(
