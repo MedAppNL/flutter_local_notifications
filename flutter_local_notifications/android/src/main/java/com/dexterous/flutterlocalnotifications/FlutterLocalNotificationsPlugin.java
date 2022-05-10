@@ -1724,7 +1724,7 @@ public class FlutterLocalNotificationsPlugin
     AlarmManager alarmManager = getAlarmManager(context);
     for (String id : jsonNotifications.keySet()) {
       // TODO filter out non-matching IDs
-      int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length() - 1));
+      int intId = Integer.parseInt(id.substring(SCHEDULED_NOTIFICATIONS_ID.length()));
       PendingIntent pendingIntent = getBroadcastPendingIntent(context, intId, intent);
       alarmManager.cancel(pendingIntent);
     }
