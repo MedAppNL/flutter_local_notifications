@@ -139,11 +139,11 @@ class FlutterLocalNotificationsPlugin {
               onSelectNotification: onSelectNotification,
               onSelectNotificationAction: onSelectNotificationAction);
     } else if (defaultTargetPlatform == TargetPlatform.linux) {
-      return await resolvePlatformSpecificImplementation<
-              LinuxFlutterLocalNotificationsPlugin>()
-          ?.initialize(initializationSettings.linux!,
-              onSelectNotification: onSelectNotification,
-              onSelectNotificationAction: onSelectNotificationAction);
+      // return await resolvePlatformSpecificImplementation<
+      //         LinuxFlutterLocalNotificationsPlugin>()
+      //     ?.initialize(initializationSettings.linux!,
+      //         onSelectNotification: onSelectNotification,
+      //         onSelectNotificationAction: onSelectNotificationAction);
     }
     return true;
   }
