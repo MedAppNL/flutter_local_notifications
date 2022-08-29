@@ -119,6 +119,8 @@ public class NotificationDetails implements Serializable {
   private static final String SUB_TEXT = "subText";
   private static final String ACTIONS = "actions";
   private static final String COLORIZED = "colorized";
+  private static final String NUMBER = "number";
+  private static final String AUDIO_ATTRIBUTES_USAGE = "audioAttributesUsage";
 
   public Integer id;
   public String title;
@@ -180,6 +182,8 @@ public class NotificationDetails implements Serializable {
   public @Nullable List<NotificationAction> actions;
   public String tag;
   public Boolean colorized;
+  public Integer number;
+  public Integer audioAttributesUsage;
 
   // Note: this is set on the Android to save details about the icon that should be used when
   // re-hydrating scheduled notifications when a device has been restarted.
@@ -266,7 +270,8 @@ public class NotificationDetails implements Serializable {
       notificationDetails.subText = (String) platformChannelSpecifics.get(SUB_TEXT);
       notificationDetails.tag = (String) platformChannelSpecifics.get(TAG);
       notificationDetails.colorized = (Boolean) platformChannelSpecifics.get(COLORIZED);
-
+      notificationDetails.number = (Integer) platformChannelSpecifics.get(NUMBER);
+      notificationDetails.audioAttributesUsage = (Integer) platformChannelSpecifics.get(AUDIO_ATTRIBUTES_USAGE);
       if (platformChannelSpecifics.containsKey(ACTIONS)) {
         List<Map<String, Object>> inputActions =
             (List<Map<String, Object>>) platformChannelSpecifics.get(ACTIONS);
