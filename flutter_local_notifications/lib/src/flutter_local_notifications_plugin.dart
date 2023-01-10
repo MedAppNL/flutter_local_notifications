@@ -103,45 +103,86 @@ class FlutterLocalNotificationsPlugin {
   /// permissions where users will see a permissions prompt. This may be fine
   /// in cases where it's acceptable to do this when the application runs for
   /// the first time. However, if your application needs to do this at a later
-  /// point in time, set the [IOSInitializationSettings.requestAlertPermission],
-  /// [IOSInitializationSettings.requestBadgePermission] and
-  /// [IOSInitializationSettings.requestSoundPermission] values to false.
+  /// point in time, set the
+  /// [DarwinInitializationSettings.requestAlertPermission],
+  /// [DarwinInitializationSettings.requestBadgePermission] and
+  /// [DarwinInitializationSettings.requestSoundPermission] values to false.
   /// [IOSFlutterLocalNotificationsPlugin.requestPermissions] can then be called
   /// to request permissions when needed.
   ///
-  /// To handle when a notification launched an application, use
-  /// [getNotificationAppLaunchDetails].
+  /// The [onDidReceiveNotificationResponse] callback is fired when the user
+  /// selects a notification or notification action that should show the
+  /// application/user interface.
+  /// application was running. To handle when a notification launched an
+  /// application, use [getNotificationAppLaunchDetails]. For notification
+  /// actions that don't show the application/user interface, the
+  /// [onDidReceiveBackgroundNotificationResponse] callback is invoked on
+  /// a background isolate. Functions passed to the
+  /// [onDidReceiveBackgroundNotificationResponse]
+  /// callback need to be annotated with the `@pragma('vm:entry-point')`
+  /// annotation to ensure they are not stripped out by the Dart compiler.
   Future<bool?> initialize(
     InitializationSettings initializationSettings, {
-    SelectNotificationCallback? onSelectNotification,
-    NotificationActionCallback? backgroundHandler,
+    DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
+    DidReceiveBackgroundNotificationResponseCallback?
+        onDidReceiveBackgroundNotificationResponse,
   }) async {
     if (kIsWeb) {
       return true;
     }
+
     if (defaultTargetPlatform == TargetPlatform.android) {
+      if (initializationSettings.android == null) {
+        throw ArgumentError(
+            'Android settings must be set when targeting Android platform.');
+      }
+
       return resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
-          ?.initialize(initializationSettings.android!,
-              onSelectNotification: onSelectNotification,
-              backgroundHandler: backgroundHandler);
+          ?.initialize(
+        initializationSettings.android!,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse:
+            onDidReceiveBackgroundNotificationResponse,
+      );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (initializationSettings.iOS == null) {
+        throw ArgumentError(
+            'iOS settings must be set when targeting iOS platform.');
+      }
+
       return await resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin>()
-          ?.initialize(initializationSettings.iOS!,
-              onSelectNotification: onSelectNotification,
-              backgroundHandler: backgroundHandler);
+          ?.initialize(
+        initializationSettings.iOS!,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse:
+            onDidReceiveBackgroundNotificationResponse,
+      );
     } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+      if (initializationSettings.macOS == null) {
+        throw ArgumentError(
+            'macOS settings must be set when targeting macOS platform.');
+      }
+
       return await resolvePlatformSpecificImplementation<
               MacOSFlutterLocalNotificationsPlugin>()
-          ?.initialize(initializationSettings.macOS!,
-              onSelectNotification: onSelectNotification,
-              onNotificationActionSelected: backgroundHandler);
+          ?.initialize(
+        initializationSettings.macOS!,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+      );
     } else if (defaultTargetPlatform == TargetPlatform.linux) {
+      if (initializationSettings.linux == null) {
+        throw ArgumentError(
+            'Linux settings must be set when targeting Linux platform.');
+      }
+
       return await resolvePlatformSpecificImplementation<
               LinuxFlutterLocalNotificationsPlugin>()
-          ?.initialize(initializationSettings.linux!,
-              onSelectNotification: onSelectNotification);
+          ?.initialize(
+        initializationSettings.linux!,
+        onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
+      );
     }
     return true;
   }
@@ -178,7 +219,7 @@ class FlutterLocalNotificationsPlugin {
     } else {
       return await FlutterLocalNotificationsPlatform.instance
               .getNotificationAppLaunchDetails() ??
-          const NotificationAppLaunchDetails(false, null);
+          const NotificationAppLaunchDetails(false);
     }
   }
 
@@ -479,4 +520,8 @@ class FlutterLocalNotificationsPlugin {
   /// Returns a list of notifications pending to be delivered/shown.
   Future<List<PendingNotificationRequest>> pendingNotificationRequests() =>
       FlutterLocalNotificationsPlatform.instance.pendingNotificationRequests();
+
+  /// Returns a list of notifications that are already delivered/shown.
+  Future<List<ActiveNotification>> getActiveNotifications() =>
+      FlutterLocalNotificationsPlatform.instance.getActiveNotifications();
 }

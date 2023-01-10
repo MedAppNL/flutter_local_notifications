@@ -1,7 +1,8 @@
 import 'dart:typed_data';
-import 'dart:ui';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications/src/platform_specifics/android/enums.dart';
@@ -30,10 +31,10 @@ void main() {
           return true;
         } else if (methodCall.method == 'pendingNotificationRequests') {
           return <Map<String, Object?>>[];
-        } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
-          return null;
         } else if (methodCall.method == 'getActiveNotifications') {
           return <Map<String, Object?>>[];
+        } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
+          return null;
         }
       });
     });
@@ -146,6 +147,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -171,6 +173,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
               'actions': <Map<String, Object>>[
                 <String, Object>{
                   'id': 'action1',
@@ -263,6 +268,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -288,6 +294,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -342,6 +351,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -367,6 +377,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -422,6 +435,7 @@ void main() {
               'showWhen': true,
               'when': timestamp,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -447,6 +461,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -503,6 +520,7 @@ void main() {
               'showWhen': true,
               'when': timestamp,
               'usesChronometer': true,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -528,6 +546,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -588,6 +609,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -613,6 +635,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -672,6 +697,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -697,6 +723,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -755,6 +784,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -780,6 +810,9 @@ void main() {
                 'htmlFormatTitle': true,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -840,6 +873,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -872,6 +906,9 @@ void main() {
                 'hideExpandedLargeIcon': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -940,6 +977,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -974,6 +1012,9 @@ void main() {
                 'hideExpandedLargeIcon': true,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1034,6 +1075,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1066,6 +1108,9 @@ void main() {
                 'hideExpandedLargeIcon': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1134,6 +1179,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1168,6 +1214,9 @@ void main() {
                 'hideExpandedLargeIcon': true,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1226,6 +1275,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1257,6 +1307,9 @@ void main() {
                 'htmlFormatLines': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1322,6 +1375,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1353,6 +1407,9 @@ void main() {
                 'htmlFormatLines': true,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1409,6 +1466,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1434,6 +1492,9 @@ void main() {
                 'htmlFormatTitle': false,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1493,6 +1554,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1518,6 +1580,9 @@ void main() {
                 'htmlFormatTitle': true,
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1584,6 +1649,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1627,6 +1693,9 @@ void main() {
                 ],
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1704,6 +1773,7 @@ void main() {
               'showWhen': true,
               'when': null,
               'usesChronometer': false,
+              'chronometerCountDown': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1749,6 +1819,9 @@ void main() {
                 ],
               },
               'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
             },
           }));
     });
@@ -1812,6 +1885,7 @@ void main() {
                     'showWhen': true,
                     'when': null,
                     'usesChronometer': false,
+                    'chronometerCountDown': false,
                     'showProgress': false,
                     'maxProgress': 0,
                     'progress': 0,
@@ -1837,6 +1911,9 @@ void main() {
                       'htmlFormatTitle': false,
                     },
                     'tag': null,
+                    'colorized': false,
+                    'number': null,
+                    'audioAttributesUsage': 5,
                   },
                 }));
           });
@@ -1904,6 +1981,7 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
+                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -1929,6 +2007,9 @@ void main() {
                   'htmlFormatTitle': false,
                 },
                 'tag': null,
+                'colorized': false,
+                'number': null,
+                'audioAttributesUsage': 5,
               },
             }));
       });
@@ -1995,6 +2076,7 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
+                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -2020,6 +2102,9 @@ void main() {
                   'htmlFormatTitle': false,
                 },
                 'tag': null,
+                'colorized': false,
+                'number': null,
+                'audioAttributesUsage': 5,
               },
             }));
       });
@@ -2087,6 +2172,7 @@ void main() {
                 'showWhen': true,
                 'when': null,
                 'usesChronometer': false,
+                'chronometerCountDown': false,
                 'showProgress': false,
                 'maxProgress': 0,
                 'progress': 0,
@@ -2112,6 +2198,9 @@ void main() {
                   'htmlFormatTitle': false,
                 },
                 'tag': null,
+                'colorized': false,
+                'number': null,
+                'audioAttributesUsage': 5,
               },
             }));
       });
@@ -2228,15 +2317,6 @@ void main() {
       ]);
     });
 
-    test('getActiveNotifications', () async {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()!
-          .getActiveNotifications();
-      expect(log,
-          <Matcher>[isMethodCall('getActiveNotifications', arguments: null)]);
-    });
-
     test('cancel', () async {
       await flutterLocalNotificationsPlugin.cancel(1);
       expect(log, <Matcher>[
@@ -2270,11 +2350,7 @@ void main() {
     });
 
     test('getActiveNotifications', () async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()!
-          .getActiveNotifications();
+      await flutterLocalNotificationsPlugin.getActiveNotifications();
       expect(log,
           <Matcher>[isMethodCall('getActiveNotifications', arguments: null)]);
     });
@@ -2331,6 +2407,100 @@ void main() {
           .areNotificationsEnabled();
       expect(
           log.last, isMethodCall('areNotificationsEnabled', arguments: null));
+    });
+
+    test('startForegroundServiceWithBlueBackgroundNotification', () async {
+      const AndroidInitializationSettings androidInitializationSettings =
+          AndroidInitializationSettings('app_icon');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(android: androidInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+        'channelId',
+        'channelName',
+        channelDescription: 'channelDescription',
+        color: Colors.blue,
+        colorized: true,
+      );
+
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()!
+          .startForegroundService(1, 'colored background notification title',
+              'colored background notification body',
+              notificationDetails: androidPlatformChannelSpecifics);
+      expect(
+          log.last,
+          isMethodCall(
+            'startForegroundService',
+            arguments: <String, Object?>{
+              'notificationData': <String, Object?>{
+                'id': 1,
+                'title': 'colored background notification title',
+                'body': 'colored background notification body',
+                'payload': '',
+                'platformSpecifics': <String, Object?>{
+                  'icon': null,
+                  'channelId': 'channelId',
+                  'channelName': 'channelName',
+                  'channelDescription': 'channelDescription',
+                  'channelShowBadge': true,
+                  'channelAction':
+                      AndroidNotificationChannelAction.createIfNotExists.index,
+                  'importance': Importance.defaultImportance.value,
+                  'priority': Priority.defaultPriority.value,
+                  'playSound': true,
+                  'enableVibration': true,
+                  'vibrationPattern': null,
+                  'groupKey': null,
+                  'setAsGroupSummary': false,
+                  'groupAlertBehavior': GroupAlertBehavior.all.index,
+                  'autoCancel': true,
+                  'ongoing': false,
+                  'colorAlpha': 255,
+                  'colorRed': 33,
+                  'colorGreen': 150,
+                  'colorBlue': 243,
+                  'onlyAlertOnce': false,
+                  'showWhen': true,
+                  'when': null,
+                  'usesChronometer': false,
+                  'chronometerCountDown': false,
+                  'showProgress': false,
+                  'maxProgress': 0,
+                  'progress': 0,
+                  'indeterminate': false,
+                  'enableLights': false,
+                  'ledColorAlpha': null,
+                  'ledColorRed': null,
+                  'ledColorGreen': null,
+                  'ledColorBlue': null,
+                  'ledOnMs': null,
+                  'ledOffMs': null,
+                  'ticker': null,
+                  'visibility': null,
+                  'timeoutAfter': null,
+                  'category': null,
+                  'additionalFlags': null,
+                  'fullScreenIntent': false,
+                  'shortcutId': null,
+                  'subText': null,
+                  'style': AndroidNotificationStyle.defaultStyle.index,
+                  'styleInformation': <String, Object>{
+                    'htmlFormatContent': false,
+                    'htmlFormatTitle': false,
+                  },
+                  'tag': null,
+                  'colorized': true,
+                  'number': null,
+                  'audioAttributesUsage': 5,
+                },
+              },
+              'startType': AndroidServiceStartType.startSticky.value,
+              'foregroundServiceTypes': null
+            },
+          ));
     });
   });
 }

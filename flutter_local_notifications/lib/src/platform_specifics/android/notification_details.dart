@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'bitmap.dart';
+import 'categories.dart';
 import 'enums.dart';
 import 'notification_sound.dart';
 import 'styles/style_information.dart';
@@ -121,6 +122,7 @@ class AndroidNotificationDetails {
     this.showWhen = true,
     this.when,
     this.usesChronometer = false,
+    this.chronometerCountDown = false,
     this.channelShowBadge = true,
     this.showProgress = false,
     this.maxProgress = 0,
@@ -141,6 +143,9 @@ class AndroidNotificationDetails {
     this.subText,
     this.tag,
     this.actions,
+    this.colorized = false,
+    this.number,
+    this.audioAttributesUsage = AudioAttributesUsage.notification,
   });
 
   /// The icon that should be used when displaying the notification.
@@ -270,6 +275,11 @@ class AndroidNotificationDetails {
   /// Useful when showing an elapsed time (like an ongoing phone call).
   final bool usesChronometer;
 
+  /// Sets the chronometer to count down instead of counting up.
+  ///
+  /// This property is only applicable to Android 7.0 and newer versions.
+  final bool chronometerCountDown;
+
   /// Specifies if the notification will be used to show progress.
   final bool showProgress;
 
@@ -315,9 +325,7 @@ class AndroidNotificationDetails {
   final int? timeoutAfter;
 
   /// The notification category.
-  ///
-  /// Refer to Android notification API documentation at https://developer.android.com/reference/androidx/core/app/NotificationCompat.html#constants_2 for the available categories
-  final String? category;
+  final AndroidNotificationCategory? category;
 
   /// Specifies whether the notification should launch a full-screen intent as
   /// soon as it triggers.
@@ -377,4 +385,23 @@ class AndroidNotificationDetails {
   /// AlarmManager APIs used for scheduling notifications only allow for using
   /// the id to uniquely identify alarms.
   final String? tag;
+
+  /// Specify coloring background should be enabled, if false, color will be
+  /// applied to app icon.
+  ///
+  /// For most styles, the coloring will only be applied if the notification is
+  /// or a foreground service notification.
+  final bool colorized;
+
+  /// Set custom notification count.
+  ///
+  /// Numbers are only displayed if the launcher application supports the
+  /// display of badges and numbers. If not supported, this value is ignored.
+  /// See https://developer.android.com/training/notify-user/badges#set_custom_notification_count
+  final int? number;
+
+  /// The attribute describing what is the intended use of the audio signal,
+  /// such as alarm or ringtone set in [`AudioAttributes.Builder`](https://developer.android.com/reference/android/media/AudioAttributes.Builder#setUsage(int))
+  /// https://developer.android.com/reference/android/media/AudioAttributes
+  final AudioAttributesUsage audioAttributesUsage;
 }

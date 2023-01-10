@@ -1,5 +1,3 @@
-import 'package:flutter_local_notifications/src/platform_specifics/android/bitmap.dart';
-
 import 'enums.dart';
 import 'initialization_settings.dart';
 import 'message.dart';
@@ -198,6 +196,7 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
         'showWhen': showWhen,
         'when': when,
         'usesChronometer': usesChronometer,
+        'chronometerCountDown': chronometerCountDown,
         'showProgress': showProgress,
         'maxProgress': maxProgress,
         'progress': progress,
@@ -212,12 +211,15 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
         'ticker': ticker,
         'visibility': visibility?.index,
         'timeoutAfter': timeoutAfter,
-        'category': category,
+        'category': category?.name,
         'fullScreenIntent': fullScreenIntent,
         'shortcutId': shortcutId,
         'additionalFlags': additionalFlags,
         'subText': subText,
         'tag': tag,
+        'colorized': colorized,
+        'number': number,
+        'audioAttributesUsage': audioAttributesUsage.value,
       }
         ..addAll(_convertActionsToMap(actions))
         ..addAll(_convertStyleInformationToMap())
