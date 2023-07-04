@@ -149,6 +149,7 @@ public class FlutterLocalNotificationsPlugin
   private static final String GET_ACTIVE_NOTIFICATIONS_METHOD = "getActiveNotifications";
   private static final String SHOW_METHOD = "show";
   private static final String CANCEL_METHOD = "cancel";
+  private static final String CANCEL_OLD_METHOD = "cancelOld";
   private static final String CANCEL_ALL_METHOD = "cancelAll";
   private static final String ZONED_SCHEDULE_METHOD = "zonedSchedule";
   private static final String PERIODICALLY_SHOW_METHOD = "periodicallyShow";
@@ -1394,6 +1395,9 @@ public class FlutterLocalNotificationsPlugin
       case CANCEL_METHOD:
         cancel(call, result);
         break;
+      case CANCEL_OLD_METHOD:
+        cancelOld(call, result);
+        break;
       case CANCEL_ALL_METHOD:
         cancelAllNotifications(result);
         break;
@@ -1492,6 +1496,14 @@ public class FlutterLocalNotificationsPlugin
     Integer id = (Integer) arguments.get(CANCEL_ID);
     String tag = (String) arguments.get(CANCEL_TAG);
     cancelNotification(id, tag);
+    result.success(null);
+  }
+
+  private void cancelOld(MethodCall call, Result result) {
+    Map<String, Object> arguments = call.arguments();
+    Integer id = (Integer) arguments.get(CANCEL_ID);
+    String tag = (String) arguments.get(CANCEL_TAG);
+    cancelOldNotification(id, tag);
     result.success(null);
   }
 
@@ -1683,6 +1695,19 @@ public class FlutterLocalNotificationsPlugin
       notificationManager.cancel(tag, id);
     }
     removeNotificationFromCache(applicationContext, id);
+  }
+
+  private void cancelOldNotification(Integer id, String tag) {
+    Intent intent = new Intent(applicationContext, OldScheduledNotificationReceiver.class);
+    PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, id, intent);
+    AlarmManager alarmManager = getAlarmManager(applicationContext);
+    alarmManager.cancel(pendingIntent);
+    NotificationManagerCompat notificationManager = getNotificationManager(applicationContext);
+    if (tag == null) {
+      notificationManager.cancel(id);
+    } else {
+      notificationManager.cancel(tag, id);
+    }
   }
 
   private void cancelAllNotifications(Result result) {
