@@ -1699,7 +1699,7 @@ public class FlutterLocalNotificationsPlugin
 
   private void cancelOldNotification(Integer id, String tag) {
     Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
-    intent.setAction(ScheduledNotificationReceiver.BROADCAST_SCHEDULED_NOTIFICATION);
+    intent.setAction("BROADCAST_SCHEDULED_NOTIFICATION");
     PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, id, intent);
     AlarmManager alarmManager = getAlarmManager(applicationContext);
     alarmManager.cancel(pendingIntent);
