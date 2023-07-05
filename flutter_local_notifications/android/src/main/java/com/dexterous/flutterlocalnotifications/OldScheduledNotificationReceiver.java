@@ -1,4 +1,4 @@
-package nu.medapp.apotheek;
+package com.dexterous.flutterlocalnotifications;
 
 import android.app.Notification;
 import android.content.BroadcastReceiver;
