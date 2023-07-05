@@ -16,37 +16,24 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
-/** Created by michaelbui on 24/3/18. */
+// Old class for the purpose of removing old notifications
+@Deprecated
 @Keep
-public class NewScheduledNotificationReceiver extends BroadcastReceiver {
+public class ScheduledNotificationReceiver extends BroadcastReceiver {
 
-  private static final String TAG = "ScheduledNotifReceiver";
+  public static final String BROADCAST_SCHEDULED_NOTIFICATION = "BROADCAST_SCHEDULED_NOTIFICATION";
 
   @Override
-  @SuppressWarnings("deprecation")
   public void onReceive(final Context context, Intent intent) {
+    Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive started");
     String notificationDetailsJson =
         intent.getStringExtra(FlutterLocalNotificationsPlugin.NOTIFICATION_DETAILS);
     if (StringUtils.isNullOrEmpty(notificationDetailsJson)) {
+      Log.e("FLUT_LOCAL_NOT", "Old stuff happening for no reason");
       // This logic is needed for apps that used the plugin prior to 0.3.4
-
-      Notification notification;
-      int notificationId = intent.getIntExtra("notification_id", 0);
-
-      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-        notification = intent.getParcelableExtra("notification", Notification.class);
-      } else {
-        notification = intent.getParcelableExtra("notification");
-      }
-
-      if (notification == null) {
-        // This means the notification is corrupt
-        FlutterLocalNotificationsPlugin.removeNotificationFromCache(context, notificationId);
-        Log.e(TAG, "Failed to parse a notification from  Intent. ID: " + notificationId);
-        return;
-      }
-
+      Notification notification = intent.getParcelableExtra("notification");
       notification.when = System.currentTimeMillis();
+      int notificationId = intent.getIntExtra("notification_id", 0);
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
       notificationManager.notify(notificationId, notification);
       boolean repeat = intent.getBooleanExtra("repeat", false);
@@ -57,9 +44,21 @@ public class NewScheduledNotificationReceiver extends BroadcastReceiver {
       Gson gson = FlutterLocalNotificationsPlugin.buildGson();
       Type type = new TypeToken<NotificationDetails>() {}.getType();
       NotificationDetails notificationDetails = gson.fromJson(notificationDetailsJson, type);
-
       FlutterLocalNotificationsPlugin.showNotification(context, notificationDetails);
-      FlutterLocalNotificationsPlugin.scheduleNextNotification(context, notificationDetails);
+      Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive parsed JSON, showed notification");
+      // if (notificationDetails.scheduledNotificationRepeatFrequency != null) {
+      //   FlutterLocalNotificationsPlugin.zonedScheduleNextNotification(context, notificationDetails);
+      // } else if (notificationDetails.matchDateTimeComponents != null) {
+      //   FlutterLocalNotificationsPlugin.zonedScheduleNextNotificationMatchingDateComponents(
+      //       context, notificationDetails);
+      // } else if (notificationDetails.repeatInterval != null) {
+      //   FlutterLocalNotificationsPlugin.scheduleNextRepeatingNotification(
+      //       context, notificationDetails);
+      // } else {
+        FlutterLocalNotificationsPlugin.removeNotificationFromCache(
+            context, notificationDetails.id);
+      // }
     }
+    Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive finished");
   }
 }
