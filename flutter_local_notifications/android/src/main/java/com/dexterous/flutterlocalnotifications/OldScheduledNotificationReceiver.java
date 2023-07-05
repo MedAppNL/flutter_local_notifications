@@ -46,18 +46,18 @@ public class OldScheduledNotificationReceiver extends BroadcastReceiver {
       NotificationDetails notificationDetails = gson.fromJson(notificationDetailsJson, type);
       FlutterLocalNotificationsPlugin.showNotification(context, notificationDetails);
       Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive parsed JSON, showed notification");
-      if (notificationDetails.scheduledNotificationRepeatFrequency != null) {
-        FlutterLocalNotificationsPlugin.zonedScheduleNextNotification(context, notificationDetails);
-      } else if (notificationDetails.matchDateTimeComponents != null) {
-        FlutterLocalNotificationsPlugin.zonedScheduleNextNotificationMatchingDateComponents(
-            context, notificationDetails);
-      } else if (notificationDetails.repeatInterval != null) {
-        FlutterLocalNotificationsPlugin.scheduleNextRepeatingNotification(
-            context, notificationDetails);
-      } else {
-        FlutterLocalNotificationsPlugin.removeNotificationFromCache(
-            context, notificationDetails.id);
-      }
+      // if (notificationDetails.scheduledNotificationRepeatFrequency != null) {
+      //   FlutterLocalNotificationsPlugin.zonedScheduleNextNotification(context, notificationDetails);
+      // } else if (notificationDetails.matchDateTimeComponents != null) {
+      //   FlutterLocalNotificationsPlugin.zonedScheduleNextNotificationMatchingDateComponents(
+      //       context, notificationDetails);
+      // } else if (notificationDetails.repeatInterval != null) {
+      //   FlutterLocalNotificationsPlugin.scheduleNextRepeatingNotification(
+      //       context, notificationDetails);
+      // } else {
+      //   FlutterLocalNotificationsPlugin.removeNotificationFromCache(
+      //       context, notificationDetails.id);
+      // }
     }
     Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive finished");
   }
