@@ -531,7 +531,7 @@ public class FlutterLocalNotificationsPlugin
       Boolean updateScheduledNotificationsCache) {
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, NewScheduledNotificationReceiver.class);
+    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
@@ -554,7 +554,7 @@ public class FlutterLocalNotificationsPlugin
       Boolean updateScheduledNotificationsCache) {
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, NewScheduledNotificationReceiver.class);
+    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
@@ -580,7 +580,7 @@ public class FlutterLocalNotificationsPlugin
         calculateNextNotificationTrigger(notificationDetails.calledAt, repeatInterval);
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, NewScheduledNotificationReceiver.class);
+    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
@@ -650,7 +650,7 @@ public class FlutterLocalNotificationsPlugin
 
     Gson gson = buildGson();
     String notificationDetailsJson = gson.toJson(notificationDetails);
-    Intent notificationIntent = new Intent(context, NewScheduledNotificationReceiver.class);
+    Intent notificationIntent = new Intent(context, ScheduledNotificationReceiver.class);
     notificationIntent.putExtra(NOTIFICATION_DETAILS, notificationDetailsJson);
     PendingIntent pendingIntent =
         getBroadcastPendingIntent(context, notificationDetails.id, notificationIntent);
@@ -1684,7 +1684,7 @@ public class FlutterLocalNotificationsPlugin
   }
 
   private void cancelNotification(Integer id, String tag) {
-    Intent intent = new Intent(applicationContext, NewScheduledNotificationReceiver.class);
+    Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
     PendingIntent pendingIntent = getBroadcastPendingIntent(applicationContext, id, intent);
     AlarmManager alarmManager = getAlarmManager(applicationContext);
     alarmManager.cancel(pendingIntent);
@@ -1721,7 +1721,7 @@ public class FlutterLocalNotificationsPlugin
       return;
     }
 
-    Intent intent = new Intent(applicationContext, NewScheduledNotificationReceiver.class);
+    Intent intent = new Intent(applicationContext, ScheduledNotificationReceiver.class);
     for (NotificationDetails scheduledNotification : scheduledNotifications) {
       PendingIntent pendingIntent =
           getBroadcastPendingIntent(applicationContext, scheduledNotification.id, intent);
