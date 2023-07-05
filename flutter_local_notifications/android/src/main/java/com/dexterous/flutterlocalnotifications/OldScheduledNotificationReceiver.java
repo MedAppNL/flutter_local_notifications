@@ -19,7 +19,7 @@ import java.lang.reflect.Type;
 // Old class for the purpose of removing old notifications
 @Deprecated
 @Keep
-public class OldScheduledNotificationReceiver extends BroadcastReceiver {
+public class ScheduledNotificationReceiver extends BroadcastReceiver {
 
   public static final String BROADCAST_SCHEDULED_NOTIFICATION = "BROADCAST_SCHEDULED_NOTIFICATION";
 
@@ -55,8 +55,8 @@ public class OldScheduledNotificationReceiver extends BroadcastReceiver {
       //   FlutterLocalNotificationsPlugin.scheduleNextRepeatingNotification(
       //       context, notificationDetails);
       // } else {
-      //   FlutterLocalNotificationsPlugin.removeNotificationFromCache(
-      //       context, notificationDetails.id);
+        FlutterLocalNotificationsPlugin.removeNotificationFromCache(
+            context, notificationDetails.id);
       // }
     }
     Log.d("FLUT_LOCAL_NOT", "BroadcastReceiver.onReceive finished");
