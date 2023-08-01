@@ -60,6 +60,7 @@ public class ScheduledNotificationReceiver extends BroadcastReceiver {
 
       FlutterLocalNotificationsPlugin.showNotification(context, notificationDetails);
       FlutterLocalNotificationsPlugin.scheduleNextNotification(context, notificationDetails);
+      FlutterLocalNotificationsPlugin.onNotificationTriggered(notificationDetails);
     }
   }
 }

@@ -107,6 +107,7 @@ class MethodChannelFlutterLocalNotificationsPlugin
 class AndroidFlutterLocalNotificationsPlugin
     extends MethodChannelFlutterLocalNotificationsPlugin {
   DidReceiveNotificationResponseCallback? _ondidReceiveNotificationResponse;
+  void Function(Object? notification)? _onNotificationTriggeredCallback;
 
   /// Initializes the plugin.
   ///
@@ -129,8 +130,10 @@ class AndroidFlutterLocalNotificationsPlugin
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
     DidReceiveBackgroundNotificationResponseCallback?
         onDidReceiveBackgroundNotificationResponse,
+    void Function(Object? notification)? onNotificationTriggered,
   }) async {
     _ondidReceiveNotificationResponse = onDidReceiveNotificationResponse;
+    _onNotificationTriggeredCallback = onNotificationTriggered;
     _channel.setMethodCallHandler(_handleMethod);
 
     final Map<String, Object> arguments = initializationSettings.toMap();
@@ -275,6 +278,10 @@ class AndroidFlutterLocalNotificationsPlugin
   /// multiple times.
   Future<void> stopForegroundService() =>
       _channel.invokeMethod('stopForegroundService');
+
+  /// Calls the registered callback for an alarm trigger.
+  void onAlarmTriggered(Object? alarm) =>
+      _onNotificationTriggeredCallback?.call(alarm);
 
   @override
   Future<void> show(

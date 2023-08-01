@@ -127,6 +127,7 @@ class FlutterLocalNotificationsPlugin {
     DidReceiveNotificationResponseCallback? onDidReceiveNotificationResponse,
     DidReceiveBackgroundNotificationResponseCallback?
         onDidReceiveBackgroundNotificationResponse,
+    void Function(Object? notification)? onNotificationTriggered,
   }) async {
     if (kIsWeb) {
       return true;
@@ -145,6 +146,7 @@ class FlutterLocalNotificationsPlugin {
         onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
         onDidReceiveBackgroundNotificationResponse:
             onDidReceiveBackgroundNotificationResponse,
+        onNotificationTriggered: onNotificationTriggered,
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       if (initializationSettings.iOS == null) {
@@ -284,6 +286,7 @@ class FlutterLocalNotificationsPlugin {
       await FlutterLocalNotificationsPlatform.instance.cancel(id);
     }
   }
+
   /// Cancel/remove the notification with the specified id.
   ///
   /// This applies to notifications that have been scheduled and those that
