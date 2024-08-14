@@ -985,9 +985,14 @@ public class FlutterLocalNotificationsPlugin
   }
 
   private static Intent getLaunchIntent(Context context) {
-    String packageName = context.getPackageName();
-    PackageManager packageManager = context.getPackageManager();
-    return packageManager.getLaunchIntentForPackage(packageName);
+
+    Intent i = new Intent();
+i.setClassName("nu.medapp.apotheek", "nu.medapp.apotheek.FullScreenActivity");
+i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+return i;
+    // String packageName = context.getPackageName();
+    // PackageManager packageManager = context.getPackageManager();
+    // return packageManager.getLaunchIntentForPackage(packageName);
   }
 
   private static void setStyle(
