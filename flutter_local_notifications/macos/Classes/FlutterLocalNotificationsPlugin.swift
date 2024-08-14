@@ -14,6 +14,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         static let requestAlertPermission = "requestAlertPermission"
         static let requestSoundPermission = "requestSoundPermission"
         static let requestBadgePermission = "requestBadgePermission"
+        static let requestProvisionalPermission = "requestProvisionalPermission"
         static let requestCriticalPermission = "requestCriticalPermission"
         static let defaultPresentAlert = "defaultPresentAlert"
         static let defaultPresentSound = "defaultPresentSound"
@@ -23,6 +24,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         static let alert = "alert"
         static let sound = "sound"
         static let badge = "badge"
+        static let provisional = "provisional"
         static let critical = "critical"
         static let notificationLaunchedApp = "notificationLaunchedApp"
         static let id = "id"
@@ -36,6 +38,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         static let platformSpecifics = "platformSpecifics"
         static let badgeNumber = "badgeNumber"
         static let repeatInterval = "repeatInterval"
+        static let repeatIntervalMilliseconds = "repeatIntervalMilliseconds"
         static let attachments = "attachments"
         static let identifier = "identifier"
         static let filePath = "filePath"
@@ -45,6 +48,12 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         static let interruptionLevel = "interruptionLevel"
         static let actionId = "actionId"
         static let notificationResponseType = "notificationResponseType"
+        static let isNotificationsEnabled = "isEnabled"
+        static let isSoundEnabled = "isSoundEnabled"
+        static let isAlertEnabled = "isAlertEnabled"
+        static let isBadgeEnabled = "isBadgeEnabled"
+        static let isProvisionalEnabled = "isProvisionalEnabled"
+        static let isCriticalEnabled = "isCriticalEnabled"
     }
 
     struct ErrorMessages {
@@ -191,6 +200,8 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
             initialize(call, result)
         case "requestPermissions":
             requestPermissions(call, result)
+        case "checkPermissions":
+            checkPermissions(call, result)
         case "getNotificationAppLaunchDetails":
             getNotificationAppLaunchDetails(result)
         case "cancel":
@@ -206,6 +217,8 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         case "zonedSchedule":
             zonedSchedule(call, result)
         case "periodicallyShow":
+            periodicallyShow(call, result)
+        case "periodicallyShowWithDuration":
             periodicallyShow(call, result)
         default:
             result(FlutterMethodNotImplemented)
@@ -224,6 +237,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
             let requestedAlertPermission = arguments[MethodCallArguments.requestAlertPermission] as! Bool
             let requestedSoundPermission = arguments[MethodCallArguments.requestSoundPermission] as! Bool
             let requestedBadgePermission = arguments[MethodCallArguments.requestBadgePermission] as! Bool
+            let requestProvisionalPermission = arguments[MethodCallArguments.requestProvisionalPermission] as! Bool
             let requestedCriticalPermission = arguments[MethodCallArguments.requestCriticalPermission] as! Bool
 
             configureNotificationCategories(arguments) {
@@ -231,6 +245,7 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
                     soundPermission: requestedSoundPermission,
                     alertPermission: requestedAlertPermission,
                     badgePermission: requestedBadgePermission,
+                    provisionalPermission: requestProvisionalPermission,
                     criticalPermission: requestedCriticalPermission,
                     result: result
                 )
@@ -311,8 +326,10 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
             let requestedAlertPermission = arguments[MethodCallArguments.alert] as! Bool
             let requestedSoundPermission = arguments[MethodCallArguments.sound] as! Bool
             let requestedBadgePermission = arguments[MethodCallArguments.badge] as! Bool
+            let requestedProvisionalPermission = arguments[MethodCallArguments.provisional] as! Bool
             let requestedCriticalPermission = arguments[MethodCallArguments.critical] as! Bool
-            requestPermissionsImpl(soundPermission: requestedSoundPermission, alertPermission: requestedAlertPermission, badgePermission: requestedBadgePermission, criticalPermission: requestedCriticalPermission, result: result)
+
+            requestPermissionsImpl(soundPermission: requestedSoundPermission, alertPermission: requestedAlertPermission, badgePermission: requestedBadgePermission, provisionalPermission: requestedProvisionalPermission, criticalPermission: requestedCriticalPermission, result: result)
         } else {
             result(nil)
         }
@@ -477,21 +494,29 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         } else {
             let arguments = call.arguments as! [String: AnyObject]
             let notification = buildNSUserNotification(fromArguments: arguments)
-            let rawRepeatInterval = arguments[MethodCallArguments.repeatInterval] as! Int
-            let repeatInterval = RepeatInterval.init(rawValue: rawRepeatInterval)!
-            switch repeatInterval {
-            case .everyMinute:
-                notification.deliveryDate = Date.init(timeIntervalSinceNow: 60)
-                notification.deliveryRepeatInterval = DateComponents.init(minute: 1)
-            case .hourly:
-                notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60)
-                notification.deliveryRepeatInterval = DateComponents.init(hour: 1)
-            case .daily:
-                notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60 * 24)
-                notification.deliveryRepeatInterval = DateComponents.init(day: 1)
-            case .weekly:
-                notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60 * 24 * 7)
-                notification.deliveryRepeatInterval = DateComponents.init(weekOfYear: 1)
+            let rawRepeatInterval = arguments[MethodCallArguments.repeatInterval] as? Int
+            let repeatIntervalMilliseconds = arguments[MethodCallArguments.repeatIntervalMilliseconds] as? Int
+
+            if rawRepeatInterval != nil {
+                let repeatInterval = RepeatInterval.init(rawValue: rawRepeatInterval!)!
+                switch repeatInterval {
+                case .everyMinute:
+                    notification.deliveryDate = Date.init(timeIntervalSinceNow: 60)
+                    notification.deliveryRepeatInterval = DateComponents.init(minute: 1)
+                case .hourly:
+                    notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60)
+                    notification.deliveryRepeatInterval = DateComponents.init(hour: 1)
+                case .daily:
+                    notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60 * 24)
+                    notification.deliveryRepeatInterval = DateComponents.init(day: 1)
+                case .weekly:
+                    notification.deliveryDate = Date.init(timeIntervalSinceNow: 60 * 60 * 24 * 7)
+                    notification.deliveryRepeatInterval = DateComponents.init(weekOfYear: 1)
+                }
+            } else if repeatIntervalMilliseconds != nil {
+                let repeatIntervalSeconds = repeatIntervalMilliseconds! / 1000
+                notification.deliveryDate = Date.init(timeIntervalSinceNow: TimeInterval(repeatIntervalSeconds))
+                notification.deliveryRepeatInterval = DateComponents.init(second: repeatIntervalSeconds)
             }
             NSUserNotificationCenter.default.scheduleNotification(notification)
             result(nil)
@@ -618,24 +643,30 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
 
     @available(macOS 10.14, *)
     func buildUserNotificationTimeIntervalTrigger(fromArguments arguments: [String: AnyObject]) -> UNTimeIntervalNotificationTrigger {
-        let rawRepeatInterval = arguments[MethodCallArguments.repeatInterval] as! Int
-        let repeatInterval = RepeatInterval.init(rawValue: rawRepeatInterval)!
-        switch repeatInterval {
-        case .everyMinute:
-            return UNTimeIntervalNotificationTrigger.init(timeInterval: 60, repeats: true)
-        case .hourly:
-            return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60, repeats: true)
-        case .daily:
-            return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60 * 24, repeats: true)
-        case .weekly:
-            return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60 * 24 * 7, repeats: true)
-        }
+        let rawRepeatInterval = arguments[MethodCallArguments.repeatInterval] as? Int
+        let repeatIntervalMilliseconds = arguments[MethodCallArguments.repeatIntervalMilliseconds] as? Int
 
+        if rawRepeatInterval != nil {
+            let repeatInterval = RepeatInterval.init(rawValue: rawRepeatInterval!)!
+            switch repeatInterval {
+            case .everyMinute:
+                return UNTimeIntervalNotificationTrigger.init(timeInterval: 60, repeats: true)
+            case .hourly:
+                return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60, repeats: true)
+            case .daily:
+                return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60 * 24, repeats: true)
+            case .weekly:
+                return UNTimeIntervalNotificationTrigger.init(timeInterval: 60 * 60 * 24 * 7, repeats: true)
+            }
+        } else {
+            let repeatIntervalSeconds = repeatIntervalMilliseconds! / 1000
+            return UNTimeIntervalNotificationTrigger.init(timeInterval: TimeInterval(repeatIntervalSeconds), repeats: true)
+        }
     }
 
     @available(macOS 10.14, *)
-    func requestPermissionsImpl(soundPermission: Bool, alertPermission: Bool, badgePermission: Bool, criticalPermission: Bool, result: @escaping FlutterResult) {
-        if !soundPermission && !alertPermission && !badgePermission && !criticalPermission {
+    func requestPermissionsImpl(soundPermission: Bool, alertPermission: Bool, badgePermission: Bool, provisionalPermission: Bool, criticalPermission: Bool, result: @escaping FlutterResult) {
+        if !soundPermission && !alertPermission && !badgePermission && !provisionalPermission && !criticalPermission {
             result(false)
             return
         }
@@ -649,11 +680,33 @@ public class FlutterLocalNotificationsPlugin: NSObject, FlutterPlugin, UNUserNot
         if badgePermission {
             options.insert(.badge)
         }
+        if provisionalPermission {
+            options.insert(.provisional)
+        }
         if criticalPermission {
             options.insert(.criticalAlert)
         }
         UNUserNotificationCenter.current().requestAuthorization(options: options) { (granted, _) in
             result(granted)
+        }
+    }
+
+    func checkPermissions(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        if #available(macOS 10.14, *) {
+            UNUserNotificationCenter.current().getNotificationSettings { settings in
+                let dict = [
+                    MethodCallArguments.isNotificationsEnabled: settings.authorizationStatus == .authorized,
+                    MethodCallArguments.isSoundEnabled: settings.soundSetting == .enabled,
+                    MethodCallArguments.isAlertEnabled: settings.alertSetting == .enabled,
+                    MethodCallArguments.isBadgeEnabled: settings.badgeSetting == .enabled,
+                    MethodCallArguments.isProvisionalEnabled: settings.authorizationStatus == .provisional,
+                    MethodCallArguments.isCriticalEnabled: settings.criticalAlertSetting == .enabled
+                ]
+
+                result(dict)
+            }
+        } else {
+            result(nil)
         }
     }
 

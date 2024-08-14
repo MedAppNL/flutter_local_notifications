@@ -25,8 +25,8 @@ void main() {
     setUp(() {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      // ignore: always_specify_types
-      channel.setMockMethodCallHandler((methodCall) async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
         log.add(methodCall);
         if (methodCall.method == 'initialize') {
           return true;
@@ -37,6 +37,7 @@ void main() {
         } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
           return null;
         }
+        return null;
       });
     });
 
@@ -140,6 +141,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -261,6 +263,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -344,6 +347,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -428,6 +432,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -513,6 +518,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -602,6 +608,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -690,6 +697,94 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
+              'colorAlpha': null,
+              'colorRed': null,
+              'colorGreen': null,
+              'colorBlue': null,
+              'onlyAlertOnce': false,
+              'showWhen': true,
+              'when': null,
+              'usesChronometer': false,
+              'chronometerCountDown': false,
+              'showProgress': false,
+              'maxProgress': 0,
+              'progress': 0,
+              'indeterminate': false,
+              'enableLights': false,
+              'ledColorAlpha': null,
+              'ledColorRed': null,
+              'ledColorGreen': null,
+              'ledColorBlue': null,
+              'ledOnMs': null,
+              'ledOffMs': null,
+              'ticker': null,
+              'visibility': null,
+              'timeoutAfter': null,
+              'category': null,
+              'additionalFlags': null,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
+              'styleInformation': <String, Object>{
+                'htmlFormatContent': false,
+                'htmlFormatTitle': false,
+              },
+              'tag': null,
+              'colorized': false,
+              'number': null,
+              'audioAttributesUsage': 5,
+            },
+          }));
+    });
+
+    test('show with default Android-specific details and silent enabled',
+        () async {
+      const AndroidInitializationSettings androidInitializationSettings =
+          AndroidInitializationSettings('app_icon');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(android: androidInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      const AndroidNotificationDetails androidNotificationDetails =
+          AndroidNotificationDetails(
+        'channelId',
+        'channelName',
+        channelDescription: 'channelDescription',
+        silent: true,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+          1,
+          'notification title',
+          'notification body',
+          const NotificationDetails(android: androidNotificationDetails));
+      expect(
+          log.last,
+          isMethodCall('show', arguments: <String, Object>{
+            'id': 1,
+            'title': 'notification title',
+            'body': 'notification body',
+            'payload': '',
+            'platformSpecifics': <String, Object?>{
+              'icon': null,
+              'channelId': 'channelId',
+              'channelName': 'channelName',
+              'channelDescription': 'channelDescription',
+              'channelShowBadge': true,
+              'channelAction':
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
+              'playSound': true,
+              'enableVibration': true,
+              'vibrationPattern': null,
+              'groupKey': null,
+              'setAsGroupSummary': false,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
+              'autoCancel': true,
+              'ongoing': false,
+              'silent': true,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -777,6 +872,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -866,6 +962,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -970,6 +1067,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1068,6 +1166,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1172,6 +1271,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1268,6 +1368,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1368,6 +1469,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1459,6 +1561,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1547,6 +1650,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1642,6 +1746,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1766,6 +1871,7 @@ void main() {
               'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': false,
+              'silent': false,
               'colorAlpha': null,
               'colorRed': null,
               'colorGreen': null,
@@ -1848,6 +1954,7 @@ void main() {
               'notification body',
               repeatInterval,
               const NotificationDetails(android: androidNotificationDetails),
+              androidScheduleMode: AndroidScheduleMode.exact,
             );
 
             expect(
@@ -1878,6 +1985,7 @@ void main() {
                     'groupAlertBehavior': GroupAlertBehavior.all.index,
                     'autoCancel': true,
                     'ongoing': false,
+                    'silent': false,
                     'colorAlpha': null,
                     'colorRed': null,
                     'colorGreen': null,
@@ -1917,6 +2025,140 @@ void main() {
                     'audioAttributesUsage': 5,
                   },
                 }));
+          });
+        });
+      }
+    });
+
+    group('periodicallyShowWithDuration', () {
+      final DateTime now = DateTime(2023, 12, 29);
+
+      const Duration thirtySeconds = Duration(seconds: 30);
+      test('$thirtySeconds', () async {
+        await withClock(Clock.fixed(now), () async {
+          const AndroidInitializationSettings androidInitializationSettings =
+              AndroidInitializationSettings('app_icon');
+          const InitializationSettings initializationSettings =
+              InitializationSettings(android: androidInitializationSettings);
+          await flutterLocalNotificationsPlugin
+              .initialize(initializationSettings);
+
+          const AndroidNotificationDetails androidNotificationDetails =
+              AndroidNotificationDetails('channelId', 'channelName',
+                  channelDescription: 'channelDescription');
+
+          expect(
+              () async => await flutterLocalNotificationsPlugin
+                      .periodicallyShowWithDuration(
+                    1,
+                    'notification title',
+                    'notification body',
+                    thirtySeconds,
+                    const NotificationDetails(
+                        android: androidNotificationDetails),
+                  ),
+              throwsA(isA<ArgumentError>()));
+        });
+      });
+
+      final List<Duration> repeatDurationIntervals = <Duration>[
+        const Duration(minutes: 1),
+        const Duration(minutes: 15),
+        const Duration(hours: 5),
+        const Duration(days: 30)
+      ];
+
+      for (final Duration repeatDurationInterval in repeatDurationIntervals) {
+        test('$repeatDurationInterval', () async {
+          await withClock(Clock.fixed(now), () async {
+            const AndroidInitializationSettings androidInitializationSettings =
+                AndroidInitializationSettings('app_icon');
+            const InitializationSettings initializationSettings =
+                InitializationSettings(android: androidInitializationSettings);
+            await flutterLocalNotificationsPlugin
+                .initialize(initializationSettings);
+
+            const AndroidNotificationDetails androidNotificationDetails =
+                AndroidNotificationDetails('channelId', 'channelName',
+                    channelDescription: 'channelDescription');
+            await flutterLocalNotificationsPlugin.periodicallyShowWithDuration(
+              1,
+              'notification title',
+              'notification body',
+              repeatDurationInterval,
+              const NotificationDetails(android: androidNotificationDetails),
+            );
+
+            expect(
+                log.last,
+                isMethodCall('periodicallyShowWithDuration',
+                    arguments: <String, Object>{
+                      'id': 1,
+                      'title': 'notification title',
+                      'body': 'notification body',
+                      'payload': '',
+                      'calledAt': now.millisecondsSinceEpoch,
+                      'repeatIntervalMilliseconds':
+                          repeatDurationInterval.inMilliseconds,
+                      'platformSpecifics': <String, Object?>{
+                        'scheduleMode': 'exact',
+                        'icon': null,
+                        'channelId': 'channelId',
+                        'channelName': 'channelName',
+                        'channelDescription': 'channelDescription',
+                        'channelShowBadge': true,
+                        'channelAction': AndroidNotificationChannelAction
+                            .createIfNotExists.index,
+                        'importance': Importance.defaultImportance.value,
+                        'priority': Priority.defaultPriority.value,
+                        'playSound': true,
+                        'enableVibration': true,
+                        'vibrationPattern': null,
+                        'groupKey': null,
+                        'setAsGroupSummary': false,
+                        'groupAlertBehavior': GroupAlertBehavior.all.index,
+                        'autoCancel': true,
+                        'ongoing': false,
+                        'silent': false,
+                        'colorAlpha': null,
+                        'colorRed': null,
+                        'colorGreen': null,
+                        'colorBlue': null,
+                        'onlyAlertOnce': false,
+                        'showWhen': true,
+                        'when': null,
+                        'usesChronometer': false,
+                        'chronometerCountDown': false,
+                        'showProgress': false,
+                        'maxProgress': 0,
+                        'progress': 0,
+                        'indeterminate': false,
+                        'enableLights': false,
+                        'ledColorAlpha': null,
+                        'ledColorRed': null,
+                        'ledColorGreen': null,
+                        'ledColorBlue': null,
+                        'ledOnMs': null,
+                        'ledOffMs': null,
+                        'ticker': null,
+                        'visibility': null,
+                        'timeoutAfter': null,
+                        'category': null,
+                        'additionalFlags': null,
+                        'fullScreenIntent': false,
+                        'shortcutId': null,
+                        'subText': null,
+                        'style': AndroidNotificationStyle.defaultStyle.index,
+                        'styleInformation': <String, Object>{
+                          'htmlFormatContent': false,
+                          'htmlFormatTitle': false,
+                        },
+                        'tag': null,
+                        'colorized': false,
+                        'number': null,
+                        'audioAttributesUsage': 5,
+                      },
+                    }));
           });
         });
       }
@@ -1975,6 +2217,7 @@ void main() {
                 'groupAlertBehavior': GroupAlertBehavior.all.index,
                 'autoCancel': true,
                 'ongoing': false,
+                'silent': false,
                 'colorAlpha': null,
                 'colorRed': null,
                 'colorGreen': null,
@@ -2071,6 +2314,7 @@ void main() {
                 'groupAlertBehavior': GroupAlertBehavior.all.index,
                 'autoCancel': true,
                 'ongoing': false,
+                'silent': false,
                 'colorAlpha': null,
                 'colorRed': null,
                 'colorGreen': null,
@@ -2168,6 +2412,7 @@ void main() {
                 'groupAlertBehavior': GroupAlertBehavior.all.index,
                 'autoCancel': true,
                 'ongoing': false,
+                'silent': false,
                 'colorAlpha': null,
                 'colorRed': null,
                 'colorGreen': null,
@@ -2249,8 +2494,10 @@ void main() {
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()!
           .createNotificationChannel(const AndroidNotificationChannel(
-              'channelId', 'channelName',
-              description: 'channelDescription'));
+            'channelId',
+            'channelName',
+            description: 'channelDescription',
+          ));
       expect(log, <Matcher>[
         isMethodCall('createNotificationChannel', arguments: <String, Object?>{
           'id': 'channelId',
@@ -2267,6 +2514,7 @@ void main() {
           'ledColorRed': null,
           'ledColorGreen': null,
           'ledColorBlue': null,
+          'audioAttributesUsage': AudioAttributesUsage.notification.value,
           'channelAction':
               AndroidNotificationChannelAction.createIfNotExists.index,
         })
@@ -2288,6 +2536,7 @@ void main() {
             enableLights: true,
             enableVibration: false,
             ledColor: Color.fromARGB(255, 255, 0, 0),
+            audioAttributesUsage: AudioAttributesUsage.alarm,
           ));
       expect(log, <Matcher>[
         isMethodCall('createNotificationChannel', arguments: <String, Object?>{
@@ -2305,6 +2554,7 @@ void main() {
           'ledColorRed': 255,
           'ledColorGreen': 0,
           'ledColorBlue': 0,
+          'audioAttributesUsage': AudioAttributesUsage.alarm.value,
           'channelAction':
               AndroidNotificationChannelAction.createIfNotExists.index,
         })
@@ -2462,6 +2712,7 @@ void main() {
                   'groupAlertBehavior': GroupAlertBehavior.all.index,
                   'autoCancel': true,
                   'ongoing': false,
+                  'silent': false,
                   'colorAlpha': 255,
                   'colorRed': 33,
                   'colorGreen': 150,
@@ -2505,6 +2756,24 @@ void main() {
               'foregroundServiceTypes': null
             },
           ));
+    });
+
+    test('requestNotificationsPermission', () async {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()!
+          .requestNotificationsPermission();
+      expect(log.last,
+          isMethodCall('requestNotificationsPermission', arguments: null));
+    });
+
+    test('requestExactAlarmsPermission', () async {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()!
+          .requestExactAlarmsPermission();
+      expect(log.last,
+          isMethodCall('requestExactAlarmsPermission', arguments: null));
     });
   });
 }

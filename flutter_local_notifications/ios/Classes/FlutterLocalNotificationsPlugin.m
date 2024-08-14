@@ -22,6 +22,8 @@ NSString *const GET_CALLBACK_METHOD = @"getCallbackHandle";
 NSString *const SHOW_METHOD = @"show";
 NSString *const ZONED_SCHEDULE_METHOD = @"zonedSchedule";
 NSString *const PERIODICALLY_SHOW_METHOD = @"periodicallyShow";
+NSString *const PERIODICALLY_SHOW_WITH_DURATION_METHOD =
+    @"periodicallyShowWithDuration";
 NSString *const CANCEL_METHOD = @"cancel";
 NSString *const CANCEL_ALL_METHOD = @"cancelAll";
 NSString *const PENDING_NOTIFICATIONS_REQUESTS_METHOD =
@@ -35,12 +37,15 @@ NSString *const CALLBACK_CHANNEL =
 NSString *const ON_NOTIFICATION_METHOD = @"onNotification";
 NSString *const DID_RECEIVE_LOCAL_NOTIFICATION = @"didReceiveLocalNotification";
 NSString *const REQUEST_PERMISSIONS_METHOD = @"requestPermissions";
+NSString *const CHECK_PERMISSIONS_METHOD = @"checkPermissions";
 
 NSString *const DAY = @"day";
 
 NSString *const REQUEST_SOUND_PERMISSION = @"requestSoundPermission";
 NSString *const REQUEST_ALERT_PERMISSION = @"requestAlertPermission";
 NSString *const REQUEST_BADGE_PERMISSION = @"requestBadgePermission";
+NSString *const REQUEST_PROVISIONAL_PERMISSION =
+    @"requestProvisionalPermission";
 NSString *const REQUEST_CRITICAL_PERMISSION = @"requestCriticalPermission";
 NSString *const DEFAULT_PRESENT_ALERT = @"defaultPresentAlert";
 NSString *const DEFAULT_PRESENT_SOUND = @"defaultPresentSound";
@@ -50,6 +55,7 @@ NSString *const DEFAULT_PRESENT_LIST = @"defaultPresentList";
 NSString *const SOUND_PERMISSION = @"sound";
 NSString *const ALERT_PERMISSION = @"alert";
 NSString *const BADGE_PERMISSION = @"badge";
+NSString *const PROVISIONAL_PERMISSION = @"provisional";
 NSString *const CRITICAL_PERMISSION = @"critical";
 NSString *const CALLBACK_DISPATCHER = @"callbackDispatcher";
 NSString *const ON_NOTIFICATION_CALLBACK_DISPATCHER =
@@ -75,6 +81,7 @@ NSString *const PRESENT_LIST = @"presentList";
 NSString *const BADGE_NUMBER = @"badgeNumber";
 NSString *const MILLISECONDS_SINCE_EPOCH = @"millisecondsSinceEpoch";
 NSString *const REPEAT_INTERVAL = @"repeatInterval";
+NSString *const REPEAT_INTERVAL_MILLISECODNS = @"repeatIntervalMilliseconds";
 NSString *const SCHEDULED_DATE_TIME = @"scheduledDateTimeISO8601";
 NSString *const TIME_ZONE_NAME = @"timeZoneName";
 NSString *const MATCH_DATE_TIME_COMPONENTS = @"matchDateTimeComponents";
@@ -92,6 +99,13 @@ NSString *const GET_ACTIVE_NOTIFICATIONS_ERROR_MESSAGE =
     @"iOS version must be 10.0 or newer to use getActiveNotifications";
 NSString *const PRESENTATION_OPTIONS_USER_DEFAULTS =
     @"flutter_local_notifications_presentation_options";
+
+NSString *const IS_NOTIFICATIONS_ENABLED = @"isEnabled";
+NSString *const IS_SOUND_ENABLED = @"isSoundEnabled";
+NSString *const IS_ALERT_ENABLED = @"isAlertEnabled";
+NSString *const IS_BADGE_ENABLED = @"isBadgeEnabled";
+NSString *const IS_PROVISIONAL_ENABLED = @"isProvisionalEnabled";
+NSString *const IS_CRITICAL_ENABLED = @"isCriticalEnabled";
 
 typedef NS_ENUM(NSInteger, RepeatInterval) {
   EveryMinute,
@@ -165,8 +179,13 @@ static FlutterError *getFlutterError(NSError *error) {
     [self zonedSchedule:call.arguments result:result];
   } else if ([PERIODICALLY_SHOW_METHOD isEqualToString:call.method]) {
     [self periodicallyShow:call.arguments result:result];
+  } else if ([PERIODICALLY_SHOW_WITH_DURATION_METHOD
+                 isEqualToString:call.method]) {
+    [self periodicallyShow:call.arguments result:result];
   } else if ([REQUEST_PERMISSIONS_METHOD isEqualToString:call.method]) {
     [self requestPermissions:call.arguments result:result];
+  } else if ([CHECK_PERMISSIONS_METHOD isEqualToString:call.method]) {
+    [self checkPermissions:call.arguments result:result];
   } else if ([CANCEL_METHOD isEqualToString:call.method]) {
     [self cancel:((NSNumber *)call.arguments) result:result];
   } else if ([CANCEL_ALL_METHOD isEqualToString:call.method]) {
@@ -378,6 +397,7 @@ static FlutterError *getFlutterError(NSError *error) {
   bool requestedSoundPermission = false;
   bool requestedAlertPermission = false;
   bool requestedBadgePermission = false;
+  bool requestedProvisionalPermission = false;
   bool requestedCriticalPermission = false;
   NSMutableDictionary *presentationOptions = [[NSMutableDictionary alloc] init];
   if ([self containsKey:DEFAULT_PRESENT_ALERT forDictionary:arguments]) {
@@ -417,6 +437,11 @@ static FlutterError *getFlutterError(NSError *error) {
   if ([self containsKey:REQUEST_BADGE_PERMISSION forDictionary:arguments]) {
     requestedBadgePermission = [arguments[REQUEST_BADGE_PERMISSION] boolValue];
   }
+  if ([self containsKey:REQUEST_PROVISIONAL_PERMISSION
+          forDictionary:arguments]) {
+    requestedProvisionalPermission =
+        [arguments[REQUEST_PROVISIONAL_PERMISSION] boolValue];
+  }
   if ([self containsKey:REQUEST_CRITICAL_PERMISSION forDictionary:arguments]) {
     requestedCriticalPermission =
         [arguments[REQUEST_CRITICAL_PERMISSION] boolValue];
@@ -437,6 +462,7 @@ static FlutterError *getFlutterError(NSError *error) {
                     [self requestPermissionsImpl:requestedSoundPermission
                                  alertPermission:requestedAlertPermission
                                  badgePermission:requestedBadgePermission
+                           provisionalPermission:requestedProvisionalPermission
                               criticalPermission:requestedCriticalPermission
                                           result:result];
                   }];
@@ -449,6 +475,7 @@ static FlutterError *getFlutterError(NSError *error) {
   bool soundPermission = false;
   bool alertPermission = false;
   bool badgePermission = false;
+  bool provisionalPermission = false;
   bool criticalPermission = false;
   if ([self containsKey:SOUND_PERMISSION forDictionary:arguments]) {
     soundPermission = [arguments[SOUND_PERMISSION] boolValue];
@@ -459,12 +486,16 @@ static FlutterError *getFlutterError(NSError *error) {
   if ([self containsKey:BADGE_PERMISSION forDictionary:arguments]) {
     badgePermission = [arguments[BADGE_PERMISSION] boolValue];
   }
+  if ([self containsKey:PROVISIONAL_PERMISSION forDictionary:arguments]) {
+    provisionalPermission = [arguments[PROVISIONAL_PERMISSION] boolValue];
+  }
   if ([self containsKey:CRITICAL_PERMISSION forDictionary:arguments]) {
     criticalPermission = [arguments[CRITICAL_PERMISSION] boolValue];
   }
   [self requestPermissionsImpl:soundPermission
                alertPermission:alertPermission
                badgePermission:badgePermission
+         provisionalPermission:provisionalPermission
             criticalPermission:criticalPermission
                         result:result];
 }
@@ -472,6 +503,7 @@ static FlutterError *getFlutterError(NSError *error) {
 - (void)requestPermissionsImpl:(bool)soundPermission
                alertPermission:(bool)alertPermission
                badgePermission:(bool)badgePermission
+         provisionalPermission:(bool)provisionalPermission
             criticalPermission:(bool)criticalPermission
                         result:(FlutterResult _Nonnull)result {
   if (!soundPermission && !alertPermission && !badgePermission &&
@@ -494,6 +526,9 @@ static FlutterError *getFlutterError(NSError *error) {
       authorizationOptions += UNAuthorizationOptionBadge;
     }
     if (@available(iOS 12.0, *)) {
+      if (provisionalPermission) {
+        authorizationOptions += UNAuthorizationOptionProvisional;
+      }
       if (criticalPermission) {
         authorizationOptions += UNAuthorizationOptionCriticalAlert;
       }
@@ -523,6 +558,83 @@ static FlutterError *getFlutterError(NSError *error) {
         registerUserNotificationSettings:settings];
 #pragma clang diagnostic pop
     result(@YES);
+  }
+}
+
+- (void)checkPermissions:(NSDictionary *_Nonnull)arguments
+
+                  result:(FlutterResult _Nonnull)result {
+  if (@available(iOS 10.0, *)) {
+    UNUserNotificationCenter *center =
+        [UNUserNotificationCenter currentNotificationCenter];
+
+    [center getNotificationSettingsWithCompletionHandler:^(
+                UNNotificationSettings *_Nonnull settings) {
+      BOOL isEnabled =
+          settings.authorizationStatus == UNAuthorizationStatusAuthorized;
+      BOOL isSoundEnabled =
+          settings.soundSetting == UNNotificationSettingEnabled;
+      BOOL isAlertEnabled =
+          settings.alertSetting == UNNotificationSettingEnabled;
+      BOOL isBadgeEnabled =
+          settings.badgeSetting == UNNotificationSettingEnabled;
+      BOOL isProvisionalEnabled = false;
+      BOOL isCriticalEnabled = false;
+
+      if (@available(iOS 12.0, *)) {
+        isProvisionalEnabled =
+            settings.authorizationStatus == UNAuthorizationStatusProvisional;
+        isCriticalEnabled =
+            settings.criticalAlertSetting == UNNotificationSettingEnabled;
+      }
+
+      NSDictionary *dict = @{
+        IS_NOTIFICATIONS_ENABLED : @(isEnabled),
+        IS_SOUND_ENABLED : @(isSoundEnabled),
+        IS_ALERT_ENABLED : @(isAlertEnabled),
+        IS_BADGE_ENABLED : @(isBadgeEnabled),
+        IS_PROVISIONAL_ENABLED : @(isProvisionalEnabled),
+        IS_CRITICAL_ENABLED : @(isCriticalEnabled),
+      };
+
+      result(dict);
+    }];
+  } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    UIUserNotificationSettings *settings =
+        UIApplication.sharedApplication.currentUserNotificationSettings;
+
+    if (settings == nil) {
+      result(@{
+        IS_NOTIFICATIONS_ENABLED : @NO,
+        IS_SOUND_ENABLED : @NO,
+        IS_ALERT_ENABLED : @NO,
+        IS_BADGE_ENABLED : @NO,
+        IS_PROVISIONAL_ENABLED : @NO,
+        IS_CRITICAL_ENABLED : @NO,
+      });
+      return;
+    }
+
+    UIUserNotificationType types = settings.types;
+
+    BOOL isEnabled = types != UIUserNotificationTypeNone;
+    BOOL isSoundEnabled = types & UIUserNotificationTypeSound;
+    BOOL isAlertEnabled = types & UIUserNotificationTypeAlert;
+    BOOL isBadgeEnabled = types & UIUserNotificationTypeBadge;
+
+    NSDictionary *dict = @{
+      IS_NOTIFICATIONS_ENABLED : @(isEnabled),
+      IS_SOUND_ENABLED : @(isSoundEnabled),
+      IS_ALERT_ENABLED : @(isAlertEnabled),
+      IS_BADGE_ENABLED : @(isBadgeEnabled),
+      IS_PROVISIONAL_ENABLED : @NO,
+      IS_CRITICAL_ENABLED : @NO,
+    };
+
+    result(dict);
+#pragma clang diagnostic pop
   }
 }
 
@@ -709,6 +821,13 @@ static FlutterError *getFlutterError(NSError *error) {
         [self buildStandardUILocalNotification:arguments];
 #pragma clang diagnostic pop
     NSTimeInterval timeInterval = 0;
+    if ([self containsKey:REPEAT_INTERVAL_MILLISECODNS
+            forDictionary:arguments]) {
+      NSInteger repeatIntervalMilliseconds =
+          [arguments[REPEAT_INTERVAL_MILLISECODNS] integerValue];
+      timeInterval = repeatIntervalMilliseconds / 1000.0;
+      notification.repeatInterval = NSCalendarUnitSecond;
+    }
     switch ([arguments[REPEAT_INTERVAL] integerValue]) {
     case EveryMinute:
       timeInterval = 60;
@@ -990,6 +1109,14 @@ static FlutterError *getFlutterError(NSError *error) {
 
 - (UNTimeIntervalNotificationTrigger *)buildUserNotificationTimeIntervalTrigger:
     (id)arguments API_AVAILABLE(ios(10.0)) {
+
+  if ([self containsKey:REPEAT_INTERVAL_MILLISECODNS forDictionary:arguments]) {
+    NSInteger repeatIntervalMilliseconds =
+        [arguments[REPEAT_INTERVAL_MILLISECODNS] integerValue];
+    return [UNTimeIntervalNotificationTrigger
+        triggerWithTimeInterval:repeatIntervalMilliseconds / 1000.0
+                        repeats:YES];
+  }
   switch ([arguments[REPEAT_INTERVAL] integerValue]) {
   case EveryMinute:
     return [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:60

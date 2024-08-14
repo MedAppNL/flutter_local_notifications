@@ -303,9 +303,10 @@ class _HomePageState extends State<HomePage> {
           flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
 
-      final bool? granted = await androidImplementation?.requestPermission();
+      final bool? grantedNotificationPermission =
+          await androidImplementation?.requestNotificationsPermission();
       setState(() {
-        _notificationsEnabled = granted ?? false;
+        _notificationsEnabled = grantedNotificationPermission ?? false;
       });
     }
   }
@@ -449,6 +450,12 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     PaddedElevatedButton(
+                      buttonText: 'Repeat notification every 5 minutes',
+                      onPressed: () async {
+                        await _repeatPeriodicallyWithDurationNotification();
+                      },
+                    ),
+                    PaddedElevatedButton(
                       buttonText:
                           'Schedule daily 10:00:00 am notification in your '
                           'local time zone',
@@ -510,9 +517,16 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   PaddedElevatedButton(
-                    buttonText: 'Show notification with no sound',
+                    buttonText: 'Show notification from silent channel',
                     onPressed: () async {
                       await _showNotificationWithNoSound();
+                    },
+                  ),
+                  PaddedElevatedButton(
+                    buttonText:
+                        'Show silent notification from channel with sound',
+                    onPressed: () async {
+                      await _showNotificationSilently();
                     },
                   ),
                   PaddedElevatedButton(
@@ -742,6 +756,13 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     PaddedElevatedButton(
+                      buttonText:
+                          'Request full-screen intent permission (API 34+)',
+                      onPressed: () async {
+                        await _requestFullScreenIntentPermission();
+                      },
+                    ),
+                    PaddedElevatedButton(
                       buttonText: 'Show full-screen notification',
                       onPressed: () async {
                         await _showFullScreenNotification();
@@ -818,6 +839,10 @@ class _HomePageState extends State<HomePage> {
                     const Text(
                       'iOS and macOS-specific examples',
                       style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    PaddedElevatedButton(
+                      buttonText: 'Check permissions',
+                      onPressed: _checkNotificationsOnCupertino,
                     ),
                     PaddedElevatedButton(
                       buttonText: 'Request permission',
@@ -1254,6 +1279,28 @@ class _HomePageState extends State<HomePage> {
         payload: 'item x');
   }
 
+  Future<void> _requestFullScreenIntentPermission() async {
+    final bool permissionGranted = await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestFullScreenIntentPermission() ??
+        false;
+    await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+              content: Text(
+                  'Full screen intent permission granted: $permissionGranted'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ));
+  }
+
   Future<void> _showFullScreenNotification() async {
     await showDialog(
       context: context,
@@ -1261,7 +1308,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Turn off your screen'),
         content: const Text(
             'to see the full-screen intent in 5 seconds, press OK and TURN '
-            'OFF your screen'),
+            'OFF your screen. Note that the full-screen intent permission must '
+            'be granted for this to work too'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
@@ -1428,6 +1476,26 @@ class _HomePageState extends State<HomePage> {
             channelDescription: 'silent channel description',
             playSound: false,
             styleInformation: DefaultStyleInformation(true, true));
+    const DarwinNotificationDetails darwinNotificationDetails =
+        DarwinNotificationDetails(
+      presentSound: false,
+    );
+    const NotificationDetails notificationDetails = NotificationDetails(
+        android: androidNotificationDetails,
+        iOS: darwinNotificationDetails,
+        macOS: darwinNotificationDetails);
+    await flutterLocalNotificationsPlugin.show(
+        id++, '<b>silent</b> title', '<b>silent</b> body', notificationDetails);
+  }
+
+  Future<void> _showNotificationSilently() async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails('your channel id', 'your channel name',
+            channelDescription: 'your channel description',
+            importance: Importance.max,
+            priority: Priority.high,
+            ticker: 'ticker',
+            silent: true);
     const DarwinNotificationDetails darwinNotificationDetails =
         DarwinNotificationDetails(
       presentSound: false,
@@ -1859,6 +1927,23 @@ class _HomePageState extends State<HomePage> {
       'repeating title',
       'repeating body',
       RepeatInterval.everyMinute,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> _repeatPeriodicallyWithDurationNotification() async {
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+            'repeating channel id', 'repeating channel name',
+            channelDescription: 'repeating description');
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+    await flutterLocalNotificationsPlugin.periodicallyShowWithDuration(
+      id++,
+      'repeating period title',
+      'repeating period body',
+      const Duration(minutes: 5),
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
@@ -2477,6 +2562,41 @@ class _HomePageState extends State<HomePage> {
             ));
   }
 
+  Future<void> _checkNotificationsOnCupertino() async {
+    final NotificationsEnabledOptions? isEnabled =
+        await flutterLocalNotificationsPlugin
+                .resolvePlatformSpecificImplementation<
+                    IOSFlutterLocalNotificationsPlugin>()
+                ?.checkPermissions() ??
+            await flutterLocalNotificationsPlugin
+                .resolvePlatformSpecificImplementation<
+                    MacOSFlutterLocalNotificationsPlugin>()
+                ?.checkPermissions();
+    final String isEnabledString = isEnabled == null
+        ? 'ERROR: received null'
+        : '''
+    isEnabled: ${isEnabled.isEnabled}
+    isSoundEnabled: ${isEnabled.isSoundEnabled}
+    isAlertEnabled: ${isEnabled.isAlertEnabled}
+    isBadgeEnabled: ${isEnabled.isBadgeEnabled}
+    isProvisionalEnabled: ${isEnabled.isProvisionalEnabled}
+    isCriticalEnabled: ${isEnabled.isCriticalEnabled}
+    ''';
+    await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+              content: Text(isEnabledString),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ));
+  }
+
   Future<void> _deleteNotificationChannel() async {
     const String channelId = 'your channel id 2';
     await flutterLocalNotificationsPlugin
@@ -2531,7 +2651,7 @@ class _HomePageState extends State<HomePage> {
     } else if (Platform.isIOS) {
       final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       final IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      final List<String> fullVersion = iosInfo.systemVersion!.split('.');
+      final List<String> fullVersion = iosInfo.systemVersion.split('.');
       if (fullVersion.isNotEmpty) {
         final int? version = int.tryParse(fullVersion[0]);
         if (version != null && version < 10) {
@@ -2558,7 +2678,8 @@ class _HomePageState extends State<HomePage> {
           if (activeNotifications!.isEmpty)
             const Text('No active notifications'),
           if (activeNotifications.isNotEmpty)
-            for (ActiveNotification activeNotification in activeNotifications)
+            for (final ActiveNotification activeNotification
+                in activeNotifications)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -2570,7 +2691,9 @@ class _HomePageState extends State<HomePage> {
                     'title: ${activeNotification.title}\n'
                     'body: ${activeNotification.body}',
                   ),
-                  if (Platform.isAndroid && activeNotification.id != null)
+                  if (Platform.isAndroid &&
+                      activeNotification.id != null) ...<Widget>[
+                    Text('bigText: ${activeNotification.bigText}'),
                     TextButton(
                       child: const Text('Get messaging style'),
                       onPressed: () {
@@ -2578,6 +2701,7 @@ class _HomePageState extends State<HomePage> {
                             activeNotification.id!, activeNotification.tag);
                       },
                     ),
+                  ],
                   const Divider(color: Colors.black),
                 ],
               ),
@@ -2731,7 +2855,7 @@ class _HomePageState extends State<HomePage> {
             if (channels?.isEmpty ?? true)
               const Text('No notification channels')
             else
-              for (AndroidNotificationChannel channel in channels!)
+              for (final AndroidNotificationChannel channel in channels!)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -2746,7 +2870,8 @@ class _HomePageState extends State<HomePage> {
                         'vibrationPattern: ${channel.vibrationPattern}\n'
                         'showBadge: ${channel.showBadge}\n'
                         'enableLights: ${channel.enableLights}\n'
-                        'ledColor: ${channel.ledColor}\n'),
+                        'ledColor: ${channel.ledColor}\n'
+                        'audioAttributesUsage: ${channel.audioAttributesUsage}\n'),
                     const Divider(color: Colors.black),
                   ],
                 ),
@@ -2841,7 +2966,8 @@ Future<void> _showLinuxNotificationWithByteDataIcon() async {
         data: iconBytes,
         width: iconData.width,
         height: iconData.height,
-        channels: 4, // The icon has an alpha channel
+        channels: 4,
+        // The icon has an alpha channel
         hasAlpha: true,
       ),
     ),

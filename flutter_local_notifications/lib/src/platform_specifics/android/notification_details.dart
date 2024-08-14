@@ -115,6 +115,7 @@ class AndroidNotificationDetails {
     this.groupAlertBehavior = GroupAlertBehavior.all,
     this.autoCancel = true,
     this.ongoing = false,
+    this.silent = false,
     this.color,
     this.largeIcon,
     this.onlyAlertOnce = false,
@@ -240,6 +241,9 @@ class AndroidNotificationDetails {
   /// Specifies if the notification will be "ongoing".
   final bool ongoing;
 
+  /// Specifies if the notification will be "silent".
+  final bool silent;
+
   /// Specifies the color.
   final Color? color;
 
@@ -330,8 +334,9 @@ class AndroidNotificationDetails {
   /// soon as it triggers.
   ///
   /// Note: The system UI may choose to display a heads-up notification,
-  /// instead of launching your full-screen intent, while the user is using the
-  /// device. When the full-screen intent occurs, the plugin will act as though
+  /// instead of launching your full-screen intent. This can occur while the
+  /// user is using the device or due the full-screen intent not being granted.
+  /// When the full-screen intent occurs, the plugin will act as though
   /// the user has tapped on a notification so handle it the same way
   /// (e.g. via `onSelectNotification` callback) to display the appropriate
   /// page for your application.
